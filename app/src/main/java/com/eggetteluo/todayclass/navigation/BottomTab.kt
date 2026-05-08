@@ -1,19 +1,12 @@
 package com.eggetteluo.todayclass.navigation
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.Settings
-import androidx.compose.material.icons.outlined.ViewWeek
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.navigation3.runtime.NavKey
 
-data class BottomTab(
-    val route: AppRoute,
-    val label: String,
-    val icon: ImageVector
-)
-
-val bottomTabs = listOf(
-    BottomTab(HomeRoute, "看今日", Icons.Outlined.Home),
-    BottomTab(WeekRoute, "周课表", Icons.Outlined.ViewWeek),
-    BottomTab(SettingRoute, "设置", Icons.Outlined.Settings)
-)
+sealed class BottomTab(
+    val title: String,
+    val route: NavKey
+) {
+    data object Home : BottomTab("看今日", HomeRoute)
+    data object Week : BottomTab("周课表", WeekRoute)
+    data object Setting : BottomTab("设置", SettingRoute)
+}

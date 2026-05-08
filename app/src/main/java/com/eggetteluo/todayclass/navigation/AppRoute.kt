@@ -4,23 +4,13 @@ import androidx.navigation3.runtime.NavKey
 import kotlinx.serialization.Serializable
 
 @Serializable
-sealed interface AppRoute : NavKey
-
-// 三个顶层页面
-@Serializable
-data object HomeRoute : AppRoute
+data object MainRoute : NavKey
 
 @Serializable
-data object WeekRoute : AppRoute
+data object HomeRoute : NavKey
 
 @Serializable
-data object SettingRoute : AppRoute
+data object WeekRoute : NavKey
 
 @Serializable
-data class HomeDetailRoute(val courseName: String) : AppRoute
-
-@Serializable
-data class WeekDetailRoute(val day: String) : AppRoute
-
-@Serializable
-data object SettingAboutRoute : AppRoute
+data object SettingRoute : NavKey
