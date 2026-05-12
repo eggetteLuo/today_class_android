@@ -81,5 +81,7 @@ dependencies {
 
     // Easy Excel
     implementation(libs.easyexcel)
-    implementation(libs.slf4j.simple)
+
+    // FileKit
+    implementation(libs.filekit.compose)
 }
