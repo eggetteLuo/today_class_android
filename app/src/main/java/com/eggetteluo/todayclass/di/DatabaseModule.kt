@@ -16,4 +16,8 @@ val databaseModule = module {
 
     single { get<AppDatabase>().semesterInfoDao() }
 
+    single { get<AppDatabase>().courseScheduleDao() }
+
+    single { get<AppDatabase>().courseTimeRuleDao() }
+
 }
