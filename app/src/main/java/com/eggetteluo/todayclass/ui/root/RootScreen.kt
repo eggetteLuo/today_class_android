@@ -18,6 +18,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.navigation3.ui.NavDisplay
 import com.eggetteluo.todayclass.navigation.BottomTab
 import com.eggetteluo.todayclass.navigation.Navigator
+import com.eggetteluo.todayclass.ui.components.FabMenu
 import org.koin.compose.koinInject
 import org.koin.compose.navigation3.koinEntryProvider
 import org.koin.core.annotation.KoinExperimentalAPI
@@ -74,6 +75,19 @@ fun RootScreen() {
                     )
                 }
             }
+        },
+        floatingActionButton = {
+            FabMenu(
+                onUploadClick = {
+
+                },
+                onAddClick = {
+
+                },
+                onEditClick = {
+
+                }
+            )
         }
     ) { padding ->
         NavDisplay(

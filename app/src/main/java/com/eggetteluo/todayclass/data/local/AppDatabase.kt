@@ -8,6 +8,7 @@ import com.eggetteluo.todayclass.data.local.dao.CourseTimeRuleDao
 import com.eggetteluo.todayclass.data.local.dao.SemesterInfoDao
 import com.eggetteluo.todayclass.data.local.entity.CourseEntity
 import com.eggetteluo.todayclass.data.local.entity.CourseScheduleEntity
+import com.eggetteluo.todayclass.data.local.entity.CourseScheduleWeekEntity
 import com.eggetteluo.todayclass.data.local.entity.CourseTimeRuleEntity
 import com.eggetteluo.todayclass.data.local.entity.SemesterInfoEntity
 
@@ -16,7 +17,8 @@ import com.eggetteluo.todayclass.data.local.entity.SemesterInfoEntity
         CourseEntity::class,
         CourseScheduleEntity::class,
         CourseTimeRuleEntity::class,
-        SemesterInfoEntity::class
+        SemesterInfoEntity::class,
+        CourseScheduleWeekEntity::class
     ],
     version = 1,
     exportSchema = false
