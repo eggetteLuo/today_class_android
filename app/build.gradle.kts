@@ -37,6 +37,7 @@ android {
 }
 
 dependencies {
+    implementation(libs.androidx.compose.animation)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -77,4 +78,8 @@ dependencies {
 
     // Kotlin Datetime
     implementation(libs.kotlinx.datetime)
+
+    // Easy Excel
+    implementation(libs.easyexcel)
+    implementation(libs.slf4j.simple)
 }

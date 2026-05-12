@@ -1,5 +1,8 @@
 package com.eggetteluo.todayclass.ui.root
 
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -10,6 +13,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
@@ -18,6 +22,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.navigation3.ui.NavDisplay
 import com.eggetteluo.todayclass.navigation.BottomTab
 import com.eggetteluo.todayclass.navigation.Navigator
+import com.eggetteluo.todayclass.navigation.Screen
+import com.eggetteluo.todayclass.navigation.ScreenConfig
+import com.eggetteluo.todayclass.navigation.TopBarStyle
+import com.eggetteluo.todayclass.navigation.UploadRoute
 import com.eggetteluo.todayclass.ui.components.FabMenu
 import org.koin.compose.koinInject
 import org.koin.compose.navigation3.koinEntryProvider
@@ -31,24 +39,43 @@ fun RootScreen() {
 
     val tabs = listOf(BottomTab.Home, BottomTab.Week, BottomTab.Setting)
 
-    Scaffold(
-        topBar = {
-            MediumTopAppBar(
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.primary,
-                ),
-                title = {
-                    Text(
-                        text = "今日课表",
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+    val currentScreen = navigator.backStack.lastOrNull() as? Screen
+    val config = currentScreen?.config ?: ScreenConfig()
+
+    Scaffold(topBar = {
+        when (config.topBarStyle) {
+            TopBarStyle.NONE -> Unit
+
+            TopBarStyle.SMALL -> {
+                TopAppBar(
+                    title = {
+                        Text(config.title)
+                    }, colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        titleContentColor = MaterialTheme.colorScheme.primary,
                     )
-                },
-                scrollBehavior = scrollBehavior
-            )
-        },
-        bottomBar = {
+                )
+            }
+
+            TopBarStyle.MEDIUM -> {
+                MediumTopAppBar(
+                    title = {
+                        Text(
+                            text = config.title,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    },
+                    scrollBehavior = scrollBehavior,
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        titleContentColor = MaterialTheme.colorScheme.primary,
+                    )
+                )
+            }
+        }
+    }, bottomBar = {
+        if (config.showBottomBar) {
             NavigationBar {
                 tabs.forEach { tab ->
                     NavigationBarItem(
@@ -58,8 +85,7 @@ fun RootScreen() {
                         },
                         icon = {
                             Icon(
-                                imageVector = tab.icon,
-                                contentDescription = tab.title
+                                imageVector = tab.icon, contentDescription = tab.title
                             )
                         },
                         label = {
@@ -75,28 +101,22 @@ fun RootScreen() {
                     )
                 }
             }
-        },
-        floatingActionButton = {
-            FabMenu(
-                onUploadClick = {
-
-                },
-                onAddClick = {
-
-                },
-                onCourseClick = {
-
-                }
-            )
         }
-    ) { padding ->
+    }, floatingActionButton = {
+        if (config.showFab) {
+            FabMenu(onUploadClick = {
+                navigator.navigate(UploadRoute)
+            }, onAddClick = {
+
+            }, onCourseClick = {
+
+            })
+        }
+    }) { padding ->
         NavDisplay(
-            modifier = Modifier.padding(padding),
-            backStack = navigator.backStack,
-            onBack = {
+            modifier = Modifier.padding(padding), backStack = navigator.backStack, onBack = {
                 navigator.back()
-            },
-            entryProvider = koinEntryProvider()
+            }, entryProvider = koinEntryProvider()
         )
     }
 }
