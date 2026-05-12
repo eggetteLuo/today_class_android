@@ -4,6 +4,6 @@ import org.koin.dsl.module
 
 val appModule = module {
 
-    includes(navigationModule)
+    includes(navigationModule, databaseModule)
 
 }

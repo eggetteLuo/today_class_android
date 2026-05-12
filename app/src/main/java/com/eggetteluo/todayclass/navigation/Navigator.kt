@@ -8,18 +8,10 @@ class Navigator {
     // 导航
     val backStack = mutableStateListOf<NavKey>(HomeRoute)
 
-    val currentTab: BottomTab
-        get() = when (backStack.lastOrNull()) {
-            WeekRoute -> BottomTab.Week
-            SettingRoute -> BottomTab.Setting
-            else -> BottomTab.Home
-        }
-
     fun switchTab(tab: BottomTab) {
-        if (backStack.lastOrNull() != tab.route) {
-            backStack.clear()
-            backStack.add(tab.route)
-        }
+        if (backStack.lastOrNull() == tab.route) return
+        backStack.clear()
+        backStack.add(tab.route)
     }
 
     fun navigate(route: NavKey) {

@@ -1,8 +1,12 @@
 package com.eggetteluo.todayclass.di
 
-import com.eggetteluo.todayclass.navigation.MainRoute
+import com.eggetteluo.todayclass.feature.home.HomeScreen
+import com.eggetteluo.todayclass.feature.setting.SettingScreen
+import com.eggetteluo.todayclass.feature.week.WeekScreen
+import com.eggetteluo.todayclass.navigation.HomeRoute
 import com.eggetteluo.todayclass.navigation.Navigator
-import com.eggetteluo.todayclass.ui.app.MainScreen
+import com.eggetteluo.todayclass.navigation.SettingRoute
+import com.eggetteluo.todayclass.navigation.WeekRoute
 import org.koin.core.annotation.KoinExperimentalAPI
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
@@ -13,8 +17,16 @@ val navigationModule = module {
 
     singleOf(::Navigator)
 
-    navigation<MainRoute> {
-        MainScreen()
+    navigation<HomeRoute> {
+        HomeScreen()
+    }
+
+    navigation<WeekRoute> {
+        WeekScreen()
+    }
+
+    navigation<SettingRoute> {
+        SettingScreen()
     }
 
 }

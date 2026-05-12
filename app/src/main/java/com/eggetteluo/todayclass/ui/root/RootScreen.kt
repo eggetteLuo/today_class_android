@@ -1,6 +1,5 @@
-package com.eggetteluo.todayclass.ui.app
+package com.eggetteluo.todayclass.ui.root
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -8,6 +7,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MediumTopAppBar
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
@@ -15,16 +15,16 @@ import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
-import com.eggetteluo.todayclass.feature.home.HomeScreen
-import com.eggetteluo.todayclass.feature.setting.SettingScreen
-import com.eggetteluo.todayclass.feature.week.WeekScreen
+import androidx.navigation3.ui.NavDisplay
 import com.eggetteluo.todayclass.navigation.BottomTab
 import com.eggetteluo.todayclass.navigation.Navigator
 import org.koin.compose.koinInject
+import org.koin.compose.navigation3.koinEntryProvider
+import org.koin.core.annotation.KoinExperimentalAPI
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, KoinExperimentalAPI::class)
 @Composable
-fun MainScreen() {
+fun RootScreen() {
     val navigator: Navigator = koinInject()
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(rememberTopAppBarState())
 
@@ -51,40 +51,38 @@ fun MainScreen() {
             NavigationBar {
                 tabs.forEach { tab ->
                     NavigationBarItem(
-                        selected = navigator.currentTab == tab,
+                        selected = navigator.backStack.lastOrNull() == tab.route,
                         onClick = {
                             navigator.switchTab(tab)
                         },
                         icon = {
                             Icon(
                                 imageVector = tab.icon,
-                                contentDescription = null
+                                contentDescription = tab.title
                             )
                         },
                         label = {
                             Text(tab.title)
-                        }
+                        },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = MaterialTheme.colorScheme.primary,
+                            selectedTextColor = MaterialTheme.colorScheme.primary,
+                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            indicatorColor = MaterialTheme.colorScheme.primaryContainer
+                        )
                     )
                 }
             }
         }
     ) { padding ->
-        Box(
-            modifier = Modifier.padding(padding)
-        ) {
-            when (navigator.currentTab) {
-                BottomTab.Home -> {
-                    HomeScreen()
-                }
-
-                BottomTab.Week -> {
-                    WeekScreen()
-                }
-
-                BottomTab.Setting -> {
-                    SettingScreen()
-                }
-            }
-        }
+        NavDisplay(
+            modifier = Modifier.padding(padding),
+            backStack = navigator.backStack,
+            onBack = {
+                navigator.back()
+            },
+            entryProvider = koinEntryProvider()
+        )
     }
 }
