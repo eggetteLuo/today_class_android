@@ -25,7 +25,7 @@ import kotlinx.coroutines.launch
 fun FabMenu(
     onUploadClick: () -> Unit,
     onAddClick: () -> Unit,
-    onEditClick: () -> Unit
+    onCourseClick: () -> Unit
 ) {
     val scope = rememberCoroutineScope()
 
@@ -96,7 +96,7 @@ fun FabMenu(
         FloatingActionButtonMenuItem(
             onClick = {
                 scope.launch {
-                    onEditClick()
+                    onCourseClick()
                     delay(120)
                     expanded = false
                 }

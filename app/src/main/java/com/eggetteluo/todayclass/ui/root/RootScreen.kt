@@ -84,7 +84,7 @@ fun RootScreen() {
                 onAddClick = {
 
                 },
-                onEditClick = {
+                onCourseClick = {
 
                 }
             )
