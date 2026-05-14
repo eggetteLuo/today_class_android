@@ -3,6 +3,7 @@ package com.eggetteluo.todayclass.util
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.ZoneId
+import java.time.temporal.ChronoUnit
 
 object DateUtil {
 
@@ -31,6 +32,37 @@ object DateUtil {
         val endTimestamp = lastWeekSunday.atStartOfDay(zoneId).toInstant().toEpochMilli()
 
         return Pair(startTimestamp, endTimestamp)
+    }
+
+    /**
+     * 根据开学时间戳，计算今天是第几周、星期几
+     * @return Pair<Int, Int> = Pair(当前周次, 星期几[1-7])
+     */
+    fun getCurrentWeekAndDay(startTimestamp: Long): Pair<Int, Int> {
+        val today = LocalDate.now()
+        val zoneId = ZoneId.systemDefault()
+
+        // 如果没有开学时间，则返回第一周的今天
+        if (startTimestamp == 0L) {
+            return Pair(1, today.dayOfWeek.value)
+        }
+
+        // 将时间戳转为 LocalDate
+        val startDate = java.time.Instant.ofEpochMilli(startTimestamp)
+            .atZone(zoneId)
+            .toLocalDate()
+
+        // 计算今天和开学第一天差了多少天
+        val daysBetween = ChronoUnit.DAYS.between(startDate, today)
+
+        // 计算当前周次
+        val currentWeek = if (daysBetween >= 0) {
+            (daysBetween / 7).toInt() + 1
+        } else {
+            1
+        }
+
+        return Pair(currentWeek, today.dayOfWeek.value)
     }
 
 }

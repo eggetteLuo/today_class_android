@@ -110,6 +110,7 @@ class UploadViewModel(
                         currentWeekOverride = false,
                         remark = ""
                     )
+                    semesterInfoDao.clearCurrentSemesterStatus() // 将其他学期改为非激活状态
                     semesterInfoDao.insertSemester(newSemesterInfo)
                 } else {
                     exitingSemester.id
