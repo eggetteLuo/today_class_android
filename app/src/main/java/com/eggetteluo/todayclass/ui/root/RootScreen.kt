@@ -1,8 +1,5 @@
 package com.eggetteluo.todayclass.ui.root
 
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -42,77 +39,83 @@ fun RootScreen() {
     val currentScreen = navigator.backStack.lastOrNull() as? Screen
     val config = currentScreen?.config ?: ScreenConfig()
 
-    Scaffold(topBar = {
-        when (config.topBarStyle) {
-            TopBarStyle.NONE -> Unit
+    Scaffold(
+        topBar = {
+            when (config.topBarStyle) {
+                TopBarStyle.NONE -> Unit
 
-            TopBarStyle.SMALL -> {
-                TopAppBar(
-                    title = {
-                        Text(config.title)
-                    }, colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer,
-                        titleContentColor = MaterialTheme.colorScheme.primary,
-                    )
-                )
-            }
-
-            TopBarStyle.MEDIUM -> {
-                MediumTopAppBar(
-                    title = {
-                        Text(
-                            text = config.title,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    },
-                    scrollBehavior = scrollBehavior,
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer,
-                        titleContentColor = MaterialTheme.colorScheme.primary,
-                    )
-                )
-            }
-        }
-    }, bottomBar = {
-        if (config.showBottomBar) {
-            NavigationBar {
-                tabs.forEach { tab ->
-                    NavigationBarItem(
-                        selected = navigator.backStack.lastOrNull() == tab.route,
-                        onClick = {
-                            navigator.switchTab(tab)
+                TopBarStyle.SMALL -> {
+                    TopAppBar(
+                        title = {
+                            Text(config.title)
                         },
-                        icon = {
-                            Icon(
-                                imageVector = tab.icon, contentDescription = tab.title
+                        colors = TopAppBarDefaults.topAppBarColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer,
+                            titleContentColor = MaterialTheme.colorScheme.primary,
+                        )
+                    )
+                }
+
+                TopBarStyle.MEDIUM -> {
+                    MediumTopAppBar(
+                        title = {
+                            Text(
+                                text = config.title,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                         },
-                        label = {
-                            Text(tab.title)
-                        },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = MaterialTheme.colorScheme.primary,
-                            selectedTextColor = MaterialTheme.colorScheme.primary,
-                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                            indicatorColor = MaterialTheme.colorScheme.primaryContainer
+                        scrollBehavior = scrollBehavior,
+                        colors = TopAppBarDefaults.topAppBarColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer,
+                            titleContentColor = MaterialTheme.colorScheme.primary,
                         )
                     )
                 }
             }
-        }
-    }, floatingActionButton = {
-        if (config.showFab) {
-            FabMenu(onUploadClick = {
-                navigator.navigate(UploadRoute)
-            }, onAddClick = {
+        },
+        bottomBar = {
+            if (config.showBottomBar) {
+                NavigationBar {
+                    tabs.forEach { tab ->
+                        NavigationBarItem(
+                            selected = navigator.backStack.lastOrNull() == tab.route,
+                            onClick = {
+                                navigator.switchTab(tab)
+                            },
+                            icon = {
+                                Icon(
+                                    imageVector = tab.icon,
+                                    contentDescription = tab.title
+                                )
+                            },
+                            label = {
+                                Text(tab.title)
+                            },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = MaterialTheme.colorScheme.primary,
+                                selectedTextColor = MaterialTheme.colorScheme.primary,
+                                unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                indicatorColor = MaterialTheme.colorScheme.primaryContainer
+                            )
+                        )
+                    }
+                }
+            }
+        },
+        floatingActionButton = {
+            if (config.showFab) {
+                FabMenu(onUploadClick = {
+                    navigator.navigate(UploadRoute)
+                }, onAddClick = {
 
-            }, onCourseClick = {
+                }, onCourseClick = {
 
-            })
+                })
+            }
         }
-    }) { padding ->
+    ) { padding ->
         NavDisplay(
             modifier = Modifier.padding(padding), backStack = navigator.backStack, onBack = {
                 navigator.back()
