@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.twotone.CheckCircle
 import androidx.compose.material.icons.twotone.ErrorOutline
 import androidx.compose.material.icons.twotone.FileUpload
 import androidx.compose.material3.Button
@@ -28,15 +29,21 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.eggetteluo.todayclass.feature.upload.components.CourseItemCard
+import com.eggetteluo.todayclass.feature.upload.components.WeekSelectionDialog
+import com.eggetteluo.todayclass.navigation.Navigator
 import com.eggetteluo.todayclass.ui.root.LocalSnackbarHostState
 import io.github.vinceglb.filekit.compose.rememberFilePickerLauncher
 import io.github.vinceglb.filekit.core.PickerMode
 import io.github.vinceglb.filekit.core.PickerType
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -44,8 +51,12 @@ import org.koin.compose.viewmodel.koinViewModel
 fun UploadScreen(
     viewModel: UploadViewModel = koinViewModel()
 ) {
+    val navigator: Navigator = koinInject()
+
     val uiState by viewModel.uiState.collectAsState()
     val globalSnackbarHostState = LocalSnackbarHostState.current
+
+    var showWeekDialog by remember { mutableStateOf(false) }
 
     val launcher = rememberFilePickerLauncher(
         type = PickerType.File(extensions = listOf("xlsx")),
@@ -128,6 +139,22 @@ fun UploadScreen(
                     }
                 }
 
+                is UploadUiState.Importing -> {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        LoadingIndicator(modifier = Modifier.size(64.dp))
+                        Spacer(modifier = Modifier.height(24.dp))
+                        Text(
+                            text = "正在安全写入数据库...",
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        Text(
+                            text = "请勿关闭页面",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+
                 is UploadUiState.Error -> {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
@@ -189,12 +216,7 @@ fun UploadScreen(
                             shadowElevation = 8.dp
                         ) {
                             Button(
-                                onClick = {
-                                    viewModel.saveToDatabase(
-                                        state.courses,
-                                        state.semesterName
-                                    )
-                                },
+                                onClick = { showWeekDialog = true },
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(horizontal = 16.dp, vertical = 20.dp),
@@ -205,6 +227,63 @@ fun UploadScreen(
                                     style = MaterialTheme.typography.titleSmall
                                 )
                             }
+                        }
+                    }
+
+                    if (showWeekDialog) {
+                        WeekSelectionDialog(
+                            onDismiss = { showWeekDialog = false },
+                            onConfirm = { selectedWeek ->
+                                showWeekDialog = false
+                                // 调用入库方法
+                                viewModel.saveToDatabase(
+                                    state.courses,
+                                    state.semesterName,
+                                    selectedWeek
+                                )
+                            }
+                        )
+                    }
+                }
+
+                is UploadUiState.ImportComplete -> {
+                    LaunchedEffect(Unit) {
+                        globalSnackbarHostState.showSnackbar("课程已成功导入！")
+                    }
+
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
+                        modifier = Modifier.padding(32.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.TwoTone.CheckCircle,
+                            contentDescription = "Success",
+                            modifier = Modifier.size(80.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(modifier = Modifier.height(24.dp))
+                        Text(
+                            text = "导入成功",
+                            style = MaterialTheme.typography.headlineSmall,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = "您的课表已安全保存到本地数据库\n现在可以去首页查看了",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(modifier = Modifier.height(40.dp))
+                        Button(
+                            onClick = { navigator.back() },
+                            contentPadding = PaddingValues(horizontal = 32.dp, vertical = 14.dp)
+                        ) {
+                            Text(
+                                text = "完成并返回",
+                                style = MaterialTheme.typography.titleMedium
+                            )
                         }
                     }
                 }
