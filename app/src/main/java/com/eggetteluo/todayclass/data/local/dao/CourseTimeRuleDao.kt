@@ -18,4 +18,8 @@ interface CourseTimeRuleDao {
     @Query("SELECT * FROM course_time_rule")
     fun getAllTimeRules(): Flow<List<CourseTimeRuleEntity>>
 
+    // 根据楼栋类型和节次查询时间规则
+    @Query("SELECT * FROM course_time_rule WHERE buildingType = :buildingType AND sectionNo = :sectionNo")
+    suspend fun getRuleByBuildingAndSection(buildingType: String, sectionNo: Int): CourseTimeRuleEntity?
+
 }

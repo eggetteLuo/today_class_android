@@ -27,4 +27,8 @@ interface SemesterInfoDao {
     @Query("UPDATE semester_info SET isCurrent = 0")
     suspend fun clearCurrentSemesterStatus()
 
+    // 根据学期名称查找学期
+    @Query("SELECT * FROM semester_info WHERE name = :semesterName")
+    suspend fun getSemesterByName(semesterName: String): SemesterInfoEntity?
+
 }

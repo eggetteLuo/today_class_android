@@ -189,7 +189,12 @@ fun UploadScreen(
                             shadowElevation = 8.dp
                         ) {
                             Button(
-                                onClick = { /* TODO: 导入数据库逻辑 */ },
+                                onClick = {
+                                    viewModel.saveToDatabase(
+                                        state.courses,
+                                        state.semesterName
+                                    )
+                                },
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(horizontal = 16.dp, vertical = 20.dp),

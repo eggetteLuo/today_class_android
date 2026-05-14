@@ -32,4 +32,8 @@ interface CourseDao {
     @Query("SELECT * FROM course WHERE id = :courseId")
     suspend fun getCourseById(courseId: Long): CourseEntity?
 
+    // 根据课程代码查询单门课程
+    @Query("SELECT * FROM course WHERE code = :courseCode")
+    suspend fun getCourseByCode(courseCode: String): CourseEntity?
+
 }
