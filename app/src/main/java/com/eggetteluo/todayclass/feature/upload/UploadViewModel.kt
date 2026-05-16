@@ -104,15 +104,21 @@ class UploadViewModel(
                     )
                     val newSemesterInfo = SemesterInfoEntity(
                         name = semesterName,
-                        startData = startTimestamp,
-                        endData = endTimestamp,
+                        startDate = startTimestamp,
+                        endDate = endTimestamp,
                         totalWeeks = 20,
-                        currentWeekOverride = false,
+                        currentWeekOverride = null,
                         remark = ""
                     )
-                    semesterInfoDao.clearCurrentSemesterStatus() // 将其他学期改为非激活状态
+                    // 将其他学期改为非激活状态
+                    semesterInfoDao.clearCurrentSemesterStatus()
+                    // 插入新的学期，返回 semesterId
                     semesterInfoDao.insertSemester(newSemesterInfo)
                 } else {
+                    // 更新激活状态
+                    semesterInfoDao.clearCurrentSemesterStatus()
+                    semesterInfoDao.updateSemester(exitingSemester.copy(isCurrent = true))
+                    // 返回 semesterId
                     exitingSemester.id
                 }
 
@@ -170,10 +176,9 @@ class UploadViewModel(
                         )
                     }
                     courseScheduleDao.insertScheduleWeeks(weekEntities)
-
-                    // 导入成功，更新UI状态
-                    _uiState.value = UploadUiState.ImportComplete
                 }
+                // 导入成功，更新UI状态
+                _uiState.value = UploadUiState.ImportComplete
             } catch (e: Exception) {
                 _uiState.value = UploadUiState.Error("入库失败: ${e.message}")
             }

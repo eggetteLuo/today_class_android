@@ -12,7 +12,11 @@ interface CourseTimeRuleDao {
 
     // 批量插入时间规则
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertTimeRule(rules: List<CourseTimeRuleEntity>)
+    suspend fun insertTimeRules(rules: List<CourseTimeRuleEntity>)
+
+    // 插入插入时间规则
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertTimeRule(rule: CourseTimeRuleEntity)
 
     // 获取所有时间规则
     @Query("SELECT * FROM course_time_rule")

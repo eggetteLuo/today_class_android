@@ -21,7 +21,7 @@ val databaseModule = module {
                     super.onCreate(db)
                     CoroutineScope(Dispatchers.IO).launch {
                         val timeRuleDao = database.courseTimeRuleDao()
-                        timeRuleDao.insertTimeRule(DefaultTimeRules.allRules)
+                        timeRuleDao.insertTimeRules(DefaultTimeRules.allRules)
                     }
                 }
             })

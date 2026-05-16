@@ -1,9 +1,15 @@
 package com.eggetteluo.todayclass.data.local.entity
 
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "course")
+@Entity(
+    tableName = "course",
+    indices = [
+        Index(value = ["code"], unique = true)
+    ]
+)
 data class CourseEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,   // ID
