@@ -99,7 +99,7 @@ fun HomeScreen() {
                                     horizontal = 16.dp,
                                     vertical = 12.dp
                                 ),
-                                verticalArrangement = Arrangement.spacedBy(16.dp)
+                                verticalArrangement = Arrangement.spacedBy(20.dp)
                             ) {
                                 items(state.todayCourses) { course ->
                                     // 课程卡片组件
