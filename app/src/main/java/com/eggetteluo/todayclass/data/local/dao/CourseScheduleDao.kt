@@ -8,6 +8,7 @@ import androidx.room.Transaction
 import com.eggetteluo.todayclass.data.local.entity.CourseScheduleEntity
 import com.eggetteluo.todayclass.data.local.entity.CourseScheduleWeekEntity
 import com.eggetteluo.todayclass.data.local.relation.ScheduleWithDetails
+import com.eggetteluo.todayclass.data.model.TodayCourseDetail
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -35,5 +36,35 @@ interface CourseScheduleDao {
     // 删除特定排课
     @Query("DELETE FROM course_schedule WHERE id = :scheduleId")
     suspend fun deleteScheduleById(scheduleId: Long)
+
+    @Query(
+        """
+        SELECT 
+            s.id AS scheduleId,
+            c.name AS courseName,
+            c.code AS courseCode,
+            c.teacherName,
+            s.classRoom,
+            s.section,
+            r.startTime,
+            r.endTime
+        FROM course_schedule AS s
+        INNER JOIN course AS c ON s.courseId = c.id
+        INNER JOIN course_schedule_week AS w ON s.id = w.scheduleId
+        LEFT JOIN course_time_rule AS r ON s.ruleId = r.id
+        WHERE s.semesterId = :semesterId 
+            AND s.weekDay = :dayOfWeek 
+            AND w.weekNo = :currentWeek
+        ORDER BY s.section ASC
+    """
+    )
+    fun getTodayCourses(
+        semesterId: Long,
+        currentWeek: Int,
+        dayOfWeek: Int
+    ): Flow<List<TodayCourseDetail>>
+
+    @Query("DELETE FROM course_schedule WHERE semesterId = :semesterId")
+    fun deleteSchedulesBySemesterId(semesterId: Long)
 
 }

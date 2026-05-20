@@ -24,5 +24,5 @@ data class CourseScheduleWeekEntity(
     val id: Long = 0,          // ID
     val scheduleId: Long,      // 上课安排编号 (外键)
     val weekNo: Int,           // 具体上课周次
-    val remark: String?        // 说明
+    val remark: String? = ""   // 说明
 )

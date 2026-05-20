@@ -19,6 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.navigation3.ui.NavDisplay
 import com.eggetteluo.todayclass.navigation.BottomTab
@@ -75,6 +76,7 @@ fun RootScreen() {
                         colors = TopAppBarDefaults.topAppBarColors(
                             containerColor = MaterialTheme.colorScheme.primaryContainer,
                             titleContentColor = MaterialTheme.colorScheme.primary,
+                            scrolledContainerColor = MaterialTheme.colorScheme.primaryContainer
                         )
                     )
                 }
@@ -124,6 +126,7 @@ fun RootScreen() {
         snackbarHost = {
             SnackbarHost(hostState = snackbarHostState)
         },
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
     ) { padding ->
         CompositionLocalProvider(
             LocalSnackbarHostState provides snackbarHostState

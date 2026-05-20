@@ -79,8 +79,9 @@ dependencies {
     // Kotlin Datetime
     implementation(libs.kotlinx.datetime)
 
-    // Easy Excel
-    implementation(libs.easyexcel)
+    // POI
+    implementation(libs.poi)
+    implementation(libs.poi.ooxml)
 
     // FileKit
     implementation(libs.filekit.compose)

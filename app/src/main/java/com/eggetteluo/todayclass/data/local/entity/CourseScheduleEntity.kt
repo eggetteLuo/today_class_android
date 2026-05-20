@@ -39,14 +39,12 @@ data class CourseScheduleEntity(
     val courseId: Long,             // 课程编号 (外键)
     val ruleId: Long,               // 上课时间规则编号 (外键)
     val semesterId: Long,           // 学期编号 (外键)
-    val teacherName: String,        // 教师名称
     val weekDay: Int,               // 星期
-    val startSection: Int,          // 开始节次
-    val endSection: Int,            // 结束节次
-    val campusName: String?,        // 区域名称
-    val buildingName: String?,      // 楼栋名称
-    val buildingType: String?,      // 楼栋类型
-    val roomNo: String?,            // 教室号
+    val section: Int,               // 上课节次
+    val campusName: String? = "",   // 区域名称
+    val buildingName: String? = "", // 楼栋名称
+    val buildingType: String? = "", // 楼栋类型
+    val roomNo: String? = "",       // 教室号
     val classRoom: String,          // 完整上课地点
     val rawText: String             // Excel单元格原始文本
 )

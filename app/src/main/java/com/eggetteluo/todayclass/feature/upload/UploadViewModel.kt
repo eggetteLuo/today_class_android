@@ -51,7 +51,7 @@ class UploadViewModel(
                 // 读取学期信息
                 var semesterName: String
                 if (excelData.isNotEmpty()) {
-                    semesterName = excelData[0][0]?.trim() ?: "未知学期"
+                    semesterName = excelData[1][0]?.trim() ?: "未知学期"
                     Log.i("UploadViewModel", "Successful query semesterName: $semesterName")
                 } else {
                     semesterName = "未知学期"
@@ -60,6 +60,8 @@ class UploadViewModel(
                 // 解析课程信息
                 excelData.forEachIndexed { rowIndex, rowMap ->
                     if (rowIndex < 3) return@forEachIndexed
+
+                    Log.d("UploadViewModel", "index=$rowIndex map=$rowMap")
 
                     val sectionName = rowMap[0]?.trim() ?: "未知节次"
 
@@ -95,8 +97,8 @@ class UploadViewModel(
             _uiState.value = UploadUiState.Importing
             try {
                 // 存储或查询学期信息，拿到 semesterId
-                val exitingSemester = semesterInfoDao.getSemesterByName(semesterName)
-                val semesterId = if (exitingSemester == null) {
+                val existingSemester = semesterInfoDao.getSemesterByName(semesterName)
+                val semesterId = if (existingSemester == null) {
                     // 插入学期
                     val (startTimestamp, endTimestamp) = DateUtil.calculateSemesterDates(
                         currentWeek = currentWeek,
@@ -117,19 +119,22 @@ class UploadViewModel(
                 } else {
                     // 更新激活状态
                     semesterInfoDao.clearCurrentSemesterStatus()
-                    semesterInfoDao.updateSemester(exitingSemester.copy(isCurrent = true))
+                    semesterInfoDao.updateSemester(existingSemester.copy(isCurrent = true))
+                    // 删除该学期的排课数据
+                    courseScheduleDao.deleteSchedulesBySemesterId(existingSemester.id)
                     // 返回 semesterId
-                    exitingSemester.id
+                    existingSemester.id
                 }
 
                 for (course in courses) {
-                    // 存储或查询课程信息，拿到 courseId
+                    // 处理基础课程信息
                     val existingCourse = courseDao.getCourseByCode(course.courseCode)
                     val courseId = if (existingCourse == null) {
                         // 插入课程
                         val newCourse = CourseEntity(
                             code = course.courseCode,
                             name = course.courseName,
+                            teacherName = course.teacher,
                             type = "",
                             remark = ""
                         )
@@ -138,46 +143,37 @@ class UploadViewModel(
                         existingCourse.id
                     }
 
-                    // 计算时间规则
-                    val buildingType =
-                        CourseUtil.parseBuildingType(course.location) // 判断单双栋 ODD/EVEN
-                    val sectionNo = CourseUtil.sectionNameToInt(course.sectionName) // "第一节" -> 1
+                    // 解析公共参数
+                    val buildingType = CourseUtil.parseBuildingType(course.location)
+                    val currentSectionNo = CourseUtil.sectionNameToInt(course.sectionName)
+                    val weekList = CourseUtil.parseWeeksString(course.weeks)
 
-                    // 查询 ruleId
                     val timeRule = courseTimeRuleDao.getRuleByBuildingAndSection(
                         buildingType = buildingType,
-                        sectionNo = sectionNo
+                        sectionNo = currentSectionNo
                     )
                     val ruleId = timeRule?.id ?: 1L
 
                     // 插入排课数据
-                    val newSchedule = CourseScheduleEntity(
+                    val schedule = CourseScheduleEntity(
                         courseId = courseId,
                         ruleId = ruleId,
                         semesterId = semesterId,
-                        teacherName = course.teacher,
                         weekDay = course.dayOfWeek,
-                        startSection = sectionNo,
-                        endSection = sectionNo + 1,
+                        section = currentSectionNo,
                         classRoom = course.location,
                         rawText = course.cellText,
-                        buildingType = buildingType,
-                        campusName = "", buildingName = "", roomNo = ""
+                        buildingType = buildingType
                     )
-                    val scheduleId = courseScheduleDao.insertSchedule(newSchedule)
+                    val scheduleId = courseScheduleDao.insertSchedule(schedule)
 
-                    // 插入上课周次数据
-                    val weekList = CourseUtil.parseWeeksString(course.weeks)
+                    // 插入周次数据
                     val weekEntities = weekList.map { weekNo ->
-                        CourseScheduleWeekEntity(
-                            scheduleId = scheduleId,
-                            weekNo = weekNo,
-                            remark = ""
-                        )
+                        CourseScheduleWeekEntity(scheduleId = scheduleId, weekNo = weekNo)
                     }
                     courseScheduleDao.insertScheduleWeeks(weekEntities)
                 }
-                // 导入成功，更新UI状态
+
                 _uiState.value = UploadUiState.ImportComplete
             } catch (e: Exception) {
                 _uiState.value = UploadUiState.Error("入库失败: ${e.message}")
