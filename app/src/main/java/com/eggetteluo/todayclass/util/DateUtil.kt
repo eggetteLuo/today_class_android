@@ -1,11 +1,16 @@
 package com.eggetteluo.todayclass.util
 
+import com.eggetteluo.todayclass.data.model.CourseStatus
 import java.time.DayOfWeek
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 
 object DateUtil {
+
+    private val formatter = DateTimeFormatter.ofPattern("HH:mm")
 
     /**
      * 根据当前是第几周，自动推算学期的开始和结束时间戳
@@ -63,6 +68,28 @@ object DateUtil {
         }
 
         return Pair(currentWeek, today.dayOfWeek.value)
+    }
+
+    /**
+     * @param startTime "08:00"
+     * @param endTime "08:45"
+     * @param currentTime "15:53" (当前系统时间)
+     */
+    fun getCourseStatus(startTime: String, endTime: String, currentTime: String): CourseStatus {
+        val start = LocalTime.parse(startTime, formatter)
+        val end = LocalTime.parse(endTime, formatter)
+        val now = LocalTime.parse(currentTime, formatter)
+
+        return when {
+            now.isBefore(start) -> {
+                // 如果距离开始时间不到 15 分钟，标记为即将开始
+                if (now.isAfter(start.minusMinutes(15))) CourseStatus.UPCOMING
+                else CourseStatus.NOT_STARTED
+            }
+
+            now.isAfter(start) && now.isBefore(end) -> CourseStatus.IN_PROGRESS
+            else -> CourseStatus.FINISHED
+        }
     }
 
 }
