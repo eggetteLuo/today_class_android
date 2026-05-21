@@ -1,8 +1,20 @@
 package com.eggetteluo.todayclass.ui.root
 
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Cancel
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.HorizontalFloatingToolbar
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MediumTopAppBar
 import androidx.compose.material3.NavigationBar
@@ -23,6 +35,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.navigation3.ui.NavDisplay
 import com.eggetteluo.todayclass.navigation.BottomTab
+import com.eggetteluo.todayclass.navigation.FabStyle
 import com.eggetteluo.todayclass.navigation.Navigator
 import com.eggetteluo.todayclass.navigation.Screen
 import com.eggetteluo.todayclass.navigation.ScreenConfig
@@ -33,7 +46,11 @@ import org.koin.compose.koinInject
 import org.koin.compose.navigation3.koinEntryProvider
 import org.koin.core.annotation.KoinExperimentalAPI
 
-@OptIn(ExperimentalMaterial3Api::class, KoinExperimentalAPI::class)
+@OptIn(
+    ExperimentalMaterial3Api::class,
+    KoinExperimentalAPI::class,
+    ExperimentalMaterial3ExpressiveApi::class
+)
 @Composable
 fun RootScreen() {
     val navigator: Navigator = koinInject()
@@ -113,14 +130,48 @@ fun RootScreen() {
             }
         },
         floatingActionButton = {
-            if (config.showFab) {
-                FabMenu(onUploadClick = {
-                    navigator.navigate(UploadRoute)
-                }, onAddClick = {
+            when (config.fabStyle) {
+                FabStyle.TOOL -> {
+                    HorizontalFloatingToolbar(
+                        expanded = true,
+                        floatingActionButton = {
+                            FloatingActionButton(
+                                onClick = { /* TODO: 处理添加逻辑 */ }
+                            ) {
+                                Icon(Icons.Filled.Add, contentDescription = "添加")
+                            }
+                        }
+                    ) {
+                        IconButton(onClick = { }) {
+                            Icon(Icons.Filled.Check, contentDescription = "确认")
+                        }
+                        IconButton(onClick = { }) {
+                            Icon(Icons.Filled.Edit, contentDescription = "编辑")
+                        }
+                        IconButton(onClick = { }) {
+                            Icon(Icons.Filled.Delete, contentDescription = "删除")
+                        }
+                        IconButton(onClick = { }) {
+                            Icon(Icons.Filled.Cancel, contentDescription = "取消")
+                        }
+                    }
+                }
 
-                }, onCourseClick = {
+                FabStyle.MENU -> {
+                    FabMenu(
+                        onUploadClick = {
+                            navigator.navigate(UploadRoute)
+                        },
+                        onAddClick = {
 
-                })
+                        },
+                        onCourseClick = {
+
+                        }
+                    )
+                }
+
+                FabStyle.NONE -> Unit
             }
         },
         snackbarHost = {

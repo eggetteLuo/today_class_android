@@ -1,23 +1,35 @@
 package com.eggetteluo.todayclass.feature.home
 
-import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.twotone.CalendarToday
 import androidx.compose.material.icons.twotone.ErrorOutline
 import androidx.compose.material.icons.twotone.HotelClass
-import androidx.compose.material3.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.Icon
+import androidx.compose.material3.LoadingIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.eggetteluo.todayclass.feature.home.components.TodayCourseCard
 import com.eggetteluo.todayclass.navigation.Navigator
+import com.eggetteluo.todayclass.navigation.ScheduleRoute
 import com.eggetteluo.todayclass.navigation.UploadRoute
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
@@ -103,7 +115,9 @@ fun HomeScreen() {
                             ) {
                                 items(state.todayCourses) { course ->
                                     // 课程卡片组件
-                                    TodayCourseCard(course = course)
+                                    TodayCourseCard(course = course) {
+                                        navigator.navigate(ScheduleRoute)
+                                    }
                                 }
                             }
                         }
@@ -136,7 +150,7 @@ private fun EmptyScheduleState() {
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = "好好休息，或者去图书馆充充电吧！",
+            text = "今天没课，去图书馆卷一下吧",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )

@@ -9,6 +9,7 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -52,7 +53,7 @@ import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
 @Composable
-fun TodayCourseCard(course: TodayCourseDetail) {
+fun TodayCourseCard(course: TodayCourseDetail, onCardClick: () -> Unit) {
     // 1. 实时时间状态管理
     var currentTime by remember {
         mutableStateOf(LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm")))
@@ -175,7 +176,9 @@ fun TodayCourseCard(course: TodayCourseDetail) {
 
         // --- 右侧：卡片内容 ---
         ElevatedCard(
-            modifier = Modifier.weight(1f),
+            modifier = Modifier
+                .weight(1f)
+                .clickable { onCardClick() },
             shape = MaterialTheme.shapes.large,
             colors = CardDefaults.elevatedCardColors(
                 containerColor = cardContainerColor

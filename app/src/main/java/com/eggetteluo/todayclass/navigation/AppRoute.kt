@@ -6,8 +6,8 @@ import kotlinx.serialization.Serializable
 data object HomeRoute : Screen {
     override val config = ScreenConfig(
         title = "今日课表",
-        showFab = true,
-        topBarStyle = TopBarStyle.MEDIUM
+        topBarStyle = TopBarStyle.MEDIUM,
+        fabStyle = FabStyle.MENU
     )
 }
 
@@ -31,8 +31,17 @@ data object SettingRoute : Screen {
 data object UploadRoute : Screen {
     override val config = ScreenConfig(
         title = "导入课表",
+        topBarStyle = TopBarStyle.SMALL,
+        showBottomBar = false
+    )
+}
+
+@Serializable
+data object ScheduleRoute : Screen {
+    override val config = ScreenConfig(
+        title = "课程详情",
+        topBarStyle = TopBarStyle.SMALL,
         showBottomBar = false,
-        showFab = false,
-        topBarStyle = TopBarStyle.SMALL
+        fabStyle = FabStyle.TOOL
     )
 }

@@ -10,8 +10,6 @@ import java.time.temporal.ChronoUnit
 
 object DateUtil {
 
-    private val formatter = DateTimeFormatter.ofPattern("HH:mm")
-
     /**
      * 根据当前是第几周，自动推算学期的开始和结束时间戳
      * @param currentWeek 用户输入的当前周数 (例如 3)
@@ -53,9 +51,7 @@ object DateUtil {
         }
 
         // 将时间戳转为 LocalDate
-        val startDate = java.time.Instant.ofEpochMilli(startTimestamp)
-            .atZone(zoneId)
-            .toLocalDate()
+        val startDate = java.time.Instant.ofEpochMilli(startTimestamp).atZone(zoneId).toLocalDate()
 
         // 计算今天和开学第一天差了多少天
         val daysBetween = ChronoUnit.DAYS.between(startDate, today)
@@ -76,18 +72,19 @@ object DateUtil {
      * @param currentTime "15:53" (当前系统时间)
      */
     fun getCourseStatus(startTime: String, endTime: String, currentTime: String): CourseStatus {
+        val formatter = DateTimeFormatter.ofPattern("HH:mm")
         val start = LocalTime.parse(startTime, formatter)
         val end = LocalTime.parse(endTime, formatter)
         val now = LocalTime.parse(currentTime, formatter)
 
         return when {
-            now.isBefore(start) -> {
-                // 如果距离开始时间不到 15 分钟，标记为即将开始
-                if (now.isAfter(start.minusMinutes(15))) CourseStatus.UPCOMING
+            now < start -> {
+                if (now >= start.minusMinutes(15)) CourseStatus.UPCOMING
                 else CourseStatus.NOT_STARTED
             }
 
-            now.isAfter(start) && now.isBefore(end) -> CourseStatus.IN_PROGRESS
+            now in start..<end -> CourseStatus.IN_PROGRESS
+
             else -> CourseStatus.FINISHED
         }
     }
