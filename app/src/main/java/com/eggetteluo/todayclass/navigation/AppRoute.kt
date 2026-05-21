@@ -1,47 +1,19 @@
 package com.eggetteluo.todayclass.navigation
 
+import androidx.navigation3.runtime.NavKey
 import kotlinx.serialization.Serializable
 
 @Serializable
-data object HomeRoute : Screen {
-    override val config = ScreenConfig(
-        title = "今日课表",
-        topBarStyle = TopBarStyle.MEDIUM,
-        fabStyle = FabStyle.MENU
-    )
-}
+data object HomeRoute : NavKey
 
 @Serializable
-data object WeekRoute : Screen {
-    override val config = ScreenConfig(
-        title = "周课表",
-        topBarStyle = TopBarStyle.MEDIUM
-    )
-}
+data object WeekRoute : NavKey
 
 @Serializable
-data object SettingRoute : Screen {
-    override val config = ScreenConfig(
-        title = "设置",
-        topBarStyle = TopBarStyle.MEDIUM
-    )
-}
+data object SettingRoute : NavKey
 
 @Serializable
-data object UploadRoute : Screen {
-    override val config = ScreenConfig(
-        title = "导入课表",
-        topBarStyle = TopBarStyle.SMALL,
-        showBottomBar = false
-    )
-}
+data object UploadRoute : NavKey
 
 @Serializable
-data object ScheduleRoute : Screen {
-    override val config = ScreenConfig(
-        title = "课程详情",
-        topBarStyle = TopBarStyle.SMALL,
-        showBottomBar = false,
-        fabStyle = FabStyle.TOOL
-    )
-}
+data object ScheduleRoute : NavKey
