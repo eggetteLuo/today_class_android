@@ -2,6 +2,7 @@ package com.eggetteluo.todayclass.feature.week
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -368,32 +369,52 @@ private fun WeeklyCourseCard(
             .clip(RoundedCornerShape(4.dp))
             .background(bgColor)
             .clickable(onClick = onClick)
-            // 如果合并后卡片变高，可以稍微增加一点内边距让文字更舒展
-            .padding(horizontal = 4.dp, vertical = 6.dp)
+            .padding(2.dp)
     ) {
         Column(
             modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
+            // 课程名称
             Text(
                 text = course.courseName,
-                style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
+                style = MaterialTheme.typography.labelSmall.copy(
+                    fontSize = 11.sp,
+                    lineHeight = 14.sp
+                ),
                 color = textColor,
                 fontWeight = FontWeight.Bold,
-                // 防止合并两节长课时名字被截断，这里可以适当放宽行数
-                maxLines = 4,
-                overflow = TextOverflow.Ellipsis,
                 textAlign = TextAlign.Center
             )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = "@${course.classRoom}",
-                style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
-                color = textColor.copy(alpha = 0.8f),
-                maxLines = 3,
-                overflow = TextOverflow.Ellipsis,
-                textAlign = TextAlign.Center
-            )
+
+            // 上课地点
+            if (course.classRoom.isNotBlank()) {
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = "@${course.classRoom}",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontSize = 9.sp,
+                        lineHeight = 12.sp
+                    ),
+                    color = textColor.copy(alpha = 0.8f),
+                    textAlign = TextAlign.Center
+                )
+            }
+
+            // 教师名称
+            if (course.teacherName.isNotBlank()) {
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = course.teacherName,
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontSize = 9.sp,
+                        lineHeight = 12.sp
+                    ),
+                    color = textColor.copy(alpha = 0.8f),
+                    textAlign = TextAlign.Center
+                )
+            }
         }
     }
 }
