@@ -221,21 +221,16 @@ fun TodayCourseCard(course: TodayCourseDetail) {
 
 @Composable
 private fun StatusBadge(status: CourseStatus, accentColor: Color) {
-    // 标签底色和文字颜色的平滑过渡
-    val containerColor by animateColorAsState(
-        targetValue = when (status) {
-            CourseStatus.IN_PROGRESS -> accentColor
-            else -> MaterialTheme.colorScheme.surfaceVariant
-        },
-        label = "badgeContainerColor"
-    )
-    val contentColor by animateColorAsState(
-        targetValue = when (status) {
-            CourseStatus.IN_PROGRESS -> MaterialTheme.colorScheme.onPrimary
-            else -> MaterialTheme.colorScheme.onSurfaceVariant
-        },
-        label = "badgeContentColor"
-    )
+    val containerColor = when (status) {
+        CourseStatus.IN_PROGRESS -> accentColor
+        CourseStatus.UPCOMING -> MaterialTheme.colorScheme.tertiaryContainer
+        else -> MaterialTheme.colorScheme.surfaceVariant
+    }
+    val contentColor = when (status) {
+        CourseStatus.IN_PROGRESS -> MaterialTheme.colorScheme.onPrimary
+        CourseStatus.UPCOMING -> MaterialTheme.colorScheme.onTertiaryContainer
+        else -> MaterialTheme.colorScheme.onSurfaceVariant
+    }
 
     Surface(
         color = containerColor,
@@ -263,7 +258,7 @@ private fun StatusBadge(status: CourseStatus, accentColor: Color) {
             Text(
                 text = when (status) {
                     CourseStatus.IN_PROGRESS -> "正在进行"
-                    CourseStatus.UPCOMING -> "待开始"
+                    CourseStatus.UPCOMING -> "即将开始"
                     CourseStatus.NOT_STARTED -> "待开始"
                     CourseStatus.FINISHED -> "已结束"
                 },
@@ -289,7 +284,7 @@ private fun InfoItem(icon: ImageVector, text: String, tint: Color) {
         Spacer(Modifier.width(6.dp))
         Text(
             text = text,
-            style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp),
+            style = MaterialTheme.typography.bodyMedium,
             color = tint,
         )
     }
