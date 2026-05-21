@@ -58,7 +58,7 @@ import org.koin.compose.viewmodel.koinViewModel
 // --- 全局布局常量 ---
 private val SectionHeight = 64.dp
 private val TimeAxisWidth = 36.dp
-private const val TotalSections = 12 // 通常大学课表一天是10-12节
+private const val TotalSections = 10
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
