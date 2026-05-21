@@ -9,6 +9,7 @@ import com.eggetteluo.todayclass.data.local.entity.CourseScheduleEntity
 import com.eggetteluo.todayclass.data.local.entity.CourseScheduleWeekEntity
 import com.eggetteluo.todayclass.data.local.relation.ScheduleWithDetails
 import com.eggetteluo.todayclass.data.model.TodayCourseDetail
+import com.eggetteluo.todayclass.data.model.WeeklyCourseDetail
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -23,7 +24,6 @@ interface CourseScheduleDao {
     suspend fun insertScheduleWeeks(weeks: List<CourseScheduleWeekEntity>)
 
     // 获取某个学期的所有课程安排，并自动填充关联的课程、时间规则和周次
-    // 注意：使用 @Relation 进行嵌套查询时，必须加上 @Transaction 注解保证数据一致性
     @Transaction
     @Query("SELECT * FROM course_schedule WHERE semesterId = :semesterId")
     fun getSchedulesWithDetailsBySemester(semesterId: Long): Flow<List<ScheduleWithDetails>>
@@ -37,6 +37,7 @@ interface CourseScheduleDao {
     @Query("DELETE FROM course_schedule WHERE id = :scheduleId")
     suspend fun deleteScheduleById(scheduleId: Long)
 
+    // 获取今日课表
     @Query(
         """
         SELECT 
@@ -63,6 +64,33 @@ interface CourseScheduleDao {
         currentWeek: Int,
         dayOfWeek: Int
     ): Flow<List<TodayCourseDetail>>
+
+    // 获取指定周次的完整周课表
+    @Query(
+        """
+        SELECT 
+            s.id AS scheduleId,
+            c.name AS courseName,
+            c.code AS courseCode,
+            c.teacherName,
+            s.classRoom,
+            s.weekDay,
+            s.section,
+            r.startTime,
+            r.endTime
+        FROM course_schedule AS s
+        INNER JOIN course AS c ON s.courseId = c.id
+        INNER JOIN course_schedule_week AS w ON s.id = w.scheduleId
+        LEFT JOIN course_time_rule AS r ON s.ruleId = r.id
+        WHERE s.semesterId = :semesterId 
+            AND w.weekNo = :currentWeek
+        ORDER BY s.weekDay ASC, s.section ASC
+    """
+    )
+    fun getWeeklyCourses(
+        semesterId: Long,
+        currentWeek: Int
+    ): Flow<List<WeeklyCourseDetail>>
 
     @Query("DELETE FROM course_schedule WHERE semesterId = :semesterId")
     fun deleteSchedulesBySemesterId(semesterId: Long)
