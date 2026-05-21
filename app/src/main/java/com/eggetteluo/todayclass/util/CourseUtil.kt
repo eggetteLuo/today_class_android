@@ -58,7 +58,10 @@ object CourseUtil {
             )
         }
 
-        return courses
+        // 核心去重逻辑：如果 课程名、教师、周次 和 地点 完全一样，就认为是同一节课的重复数据
+        return courses.distinctBy {
+            "${it.courseName}_${it.teacher}_${it.weeks}_${it.location}"
+        }
     }
 
     /**
