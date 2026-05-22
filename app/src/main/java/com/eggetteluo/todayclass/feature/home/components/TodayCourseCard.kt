@@ -4,7 +4,6 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
@@ -25,7 +24,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -43,6 +41,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.eggetteluo.todayclass.data.model.CourseStatus
@@ -54,36 +53,28 @@ import java.time.format.DateTimeFormatter
 
 @Composable
 fun TodayCourseCard(course: TodayCourseDetail, onCardClick: () -> Unit) {
-    // 1. 实时时间状态管理
     var currentTime by remember {
         mutableStateOf(LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm")))
     }
 
-    // 开启一个独立于生命周期的协程，每 10 秒刷新一次时间
     LaunchedEffect(Unit) {
         while (true) {
-            delay(10_000L) // 间隔 10 秒
+            delay(10_000L)
             currentTime = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm"))
         }
     }
 
-    // 2. 状态计算
     val startTime = course.startTime ?: "00:00"
     val endTime = course.endTime ?: "23:59"
     val status = DateUtil.getCourseStatus(startTime, endTime, currentTime)
 
-    // 3. 颜色与动态效果 (带平滑过渡动画)
-    val courseColor = MaterialTheme.colorScheme.primary
+    // 获取同款哈希颜色
+    val (hashBgColor, hashTextColor) = getCourseColorVariant(course.courseName)
+
     val isFinished = status == CourseStatus.FINISHED
     val isInProgress = status == CourseStatus.IN_PROGRESS
 
-    // 全局透明度平滑过渡
-    val containerAlpha by animateFloatAsState(
-        targetValue = if (isFinished) 0.6f else 1f,
-        label = "containerAlpha"
-    )
-
-    // 阴影高度平滑过渡：卡片会柔和地“浮起”或“落下”
+    // --- 动态颜色与高度计算 ---
     val cardElevation by animateDpAsState(
         targetValue = when (status) {
             CourseStatus.IN_PROGRESS -> 8.dp
@@ -93,44 +84,55 @@ fun TodayCourseCard(course: TodayCourseDetail, onCardClick: () -> Unit) {
         label = "cardElevation"
     )
 
-    // 卡片底色平滑过渡
+    // 卡片底色。已结束时保留主题色，降低透明度
     val cardContainerColor by animateColorAsState(
-        targetValue = when (status) {
-            CourseStatus.IN_PROGRESS -> MaterialTheme.colorScheme.primaryContainer
-            CourseStatus.FINISHED -> MaterialTheme.colorScheme.surfaceContainerLow
-            else -> MaterialTheme.colorScheme.surface
-        },
+        targetValue = if (isFinished) hashBgColor.copy(alpha = 0.4f) else hashBgColor,
         label = "cardContainerColor"
     )
 
-    // 文字颜色平滑过渡
+    // 核心修改 2：文字颜色。已结束时保留主题深色，降低透明度
     val titleTextColor by animateColorAsState(
-        targetValue = if (isInProgress) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
+        targetValue = if (isFinished) hashTextColor.copy(alpha = 0.5f) else hashTextColor,
         label = "titleTextColor"
     )
     val iconAndSubTextColor by animateColorAsState(
-        targetValue = if (isInProgress) MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurfaceVariant,
+        targetValue = if (isFinished) hashTextColor.copy(alpha = 0.4f) else hashTextColor.copy(alpha = 0.8f),
         label = "iconAndSubTextColor"
     )
 
-    // 左侧时间轴颜色联动平滑过渡
+    // 左上角节次标签。已结束时也使用半透明主题色
     val sectionBgColor by animateColorAsState(
-        targetValue = if (isInProgress) courseColor else MaterialTheme.colorScheme.surfaceVariant,
+        targetValue = when {
+            isInProgress -> hashTextColor // 上课时深色高亮
+            isFinished -> hashBgColor.copy(alpha = 0.5f) // 结束时褪色
+            else -> hashBgColor
+        },
         label = "sectionBgColor"
     )
     val sectionTextColor by animateColorAsState(
-        targetValue = if (isInProgress) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+        targetValue = when {
+            isInProgress -> Color.White
+            isFinished -> hashTextColor.copy(alpha = 0.6f)
+            else -> hashTextColor
+        },
         label = "sectionTextColor"
     )
+
+    // 左侧时间的文本颜色（结束时略微变淡）
+    val timeTextColor by animateColorAsState(
+        targetValue = if (isFinished) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f) else MaterialTheme.colorScheme.onSurface,
+        label = "timeTextColor"
+    )
+
     val timeLineColor by animateColorAsState(
-        targetValue = if (isInProgress) courseColor else MaterialTheme.colorScheme.outlineVariant,
+        targetValue = if (isFinished) hashTextColor.copy(alpha = 0.15f) else hashTextColor.copy(
+            alpha = 0.4f
+        ),
         label = "timeLineColor"
     )
 
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .alpha(containerAlpha),
+        modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // --- 左侧：时间与节次 ---
@@ -155,7 +157,8 @@ fun TodayCourseCard(course: TodayCourseDetail, onCardClick: () -> Unit) {
             Text(
                 text = startTime,
                 style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                color = timeTextColor
             )
             Box(
                 modifier = Modifier
@@ -168,22 +171,28 @@ fun TodayCourseCard(course: TodayCourseDetail, onCardClick: () -> Unit) {
             Text(
                 text = endTime,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = timeTextColor.copy(alpha = 0.7f) // 结束时间通常比开始时间稍淡
             )
         }
 
         Spacer(modifier = Modifier.width(12.dp))
 
         // --- 右侧：卡片内容 ---
-        ElevatedCard(
+        androidx.compose.material3.Card(
             modifier = Modifier
                 .weight(1f)
                 .clickable { onCardClick() },
             shape = MaterialTheme.shapes.large,
-            colors = CardDefaults.elevatedCardColors(
+            colors = CardDefaults.cardColors(
                 containerColor = cardContainerColor
             ),
-            elevation = CardDefaults.elevatedCardElevation(defaultElevation = cardElevation)
+            elevation = CardDefaults.cardElevation(
+                defaultElevation = cardElevation,
+                pressedElevation = if (isFinished) 0.dp else cardElevation,
+                focusedElevation = if (isFinished) 0.dp else cardElevation,
+                hoveredElevation = if (isFinished) 0.dp else cardElevation,
+                draggedElevation = if (isFinished) 0.dp else cardElevation
+            )
         ) {
             Column(
                 modifier = Modifier.padding(16.dp),
@@ -202,7 +211,13 @@ fun TodayCourseCard(course: TodayCourseDetail, onCardClick: () -> Unit) {
                         modifier = Modifier.weight(1f)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    StatusBadge(status = status, accentColor = courseColor)
+
+                    // 💡 核心修改 4：将主题色传递给徽章组件
+                    StatusBadge(
+                        status = status,
+                        themeBgColor = hashBgColor,
+                        themeTextColor = hashTextColor
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(4.dp))
@@ -222,17 +237,20 @@ fun TodayCourseCard(course: TodayCourseDetail, onCardClick: () -> Unit) {
     }
 }
 
+// 💡 状态徽章：吸收卡片的主题色，动态调整其表现
 @Composable
-private fun StatusBadge(status: CourseStatus, accentColor: Color) {
+private fun StatusBadge(status: CourseStatus, themeBgColor: Color, themeTextColor: Color) {
     val containerColor = when (status) {
-        CourseStatus.IN_PROGRESS -> accentColor
-        CourseStatus.UPCOMING -> MaterialTheme.colorScheme.tertiaryContainer
-        else -> MaterialTheme.colorScheme.surfaceVariant
+        CourseStatus.IN_PROGRESS -> themeTextColor
+        CourseStatus.UPCOMING -> themeTextColor.copy(alpha = 0.15f)
+        CourseStatus.NOT_STARTED -> themeTextColor.copy(alpha = 0.08f)
+        CourseStatus.FINISHED -> themeTextColor.copy(alpha = 0.08f)
     }
     val contentColor = when (status) {
-        CourseStatus.IN_PROGRESS -> MaterialTheme.colorScheme.onPrimary
-        CourseStatus.UPCOMING -> MaterialTheme.colorScheme.onTertiaryContainer
-        else -> MaterialTheme.colorScheme.onSurfaceVariant
+        CourseStatus.IN_PROGRESS -> Color.White
+        CourseStatus.UPCOMING -> themeTextColor
+        CourseStatus.NOT_STARTED -> themeTextColor.copy(alpha = 0.8f)
+        CourseStatus.FINISHED -> themeTextColor.copy(alpha = 0.6f)
     }
 
     Surface(
@@ -289,6 +307,23 @@ private fun InfoItem(icon: ImageVector, text: String, tint: Color) {
             text = text,
             style = MaterialTheme.typography.bodyMedium,
             color = tint,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f)
         )
     }
+}
+
+@Composable
+private fun getCourseColorVariant(courseName: String): Pair<Color, Color> {
+    val hash = kotlin.math.abs(courseName.hashCode())
+    val colorPalette = listOf(
+        Color(0xFFE3F2FD) to Color(0xFF1565C0), // 浅蓝
+        Color(0xFFF3E5F5) to Color(0xFF6A1B9A), // 浅紫
+        Color(0xFFE8F5E9) to Color(0xFF2E7D32), // 浅绿
+        Color(0xFFFFF3E0) to Color(0xFFEF6C00), // 浅橙
+        Color(0xFFFFEBEE) to Color(0xFFC62828), // 浅红
+        Color(0xFFE0F7FA) to Color(0xFF00838F)  // 浅青
+    )
+    return colorPalette[hash % colorPalette.size]
 }
