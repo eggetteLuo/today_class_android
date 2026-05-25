@@ -2,7 +2,6 @@ package com.eggetteluo.todayclass.feature.week.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,14 +17,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import com.eggetteluo.todayclass.data.model.WeeklyCourseDetail
+import com.eggetteluo.todayclass.ui.theme.LocalDarkTheme
 import com.eggetteluo.todayclass.util.CourseColorUtil
 
 /**
@@ -40,7 +40,7 @@ fun WeeklyCourseCard(
     onClick: () -> Unit
 ) {
     // 获取当前系统是否为深色模式
-    val isDarkTheme = isSystemInDarkTheme()
+    val isDarkTheme = LocalDarkTheme.current
 
     // 使用 remember 缓存颜色计算结果，避免在页面滚动或重组时重复计算
     val (hashBgColor, hashTextColor) = remember(course.courseName, isDarkTheme) {

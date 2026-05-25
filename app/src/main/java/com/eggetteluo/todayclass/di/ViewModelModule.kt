@@ -1,6 +1,7 @@
 package com.eggetteluo.todayclass.di
 
 import com.eggetteluo.todayclass.feature.home.HomeViewModel
+import com.eggetteluo.todayclass.feature.setting.SettingViewModel
 import com.eggetteluo.todayclass.feature.upload.UploadViewModel
 import com.eggetteluo.todayclass.feature.week.WeekViewModel
 import org.koin.core.module.dsl.viewModelOf
@@ -13,5 +14,7 @@ val viewModelModule = module {
     viewModelOf(::HomeViewModel)
 
     viewModelOf(::WeekViewModel)
+
+    viewModelOf(::SettingViewModel)
 
 }

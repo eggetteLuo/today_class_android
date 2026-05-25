@@ -85,4 +85,7 @@ dependencies {
 
     // FileKit
     implementation(libs.filekit.compose)
+
+    // datastore
+    implementation(libs.androidx.datastore.preferences)
 }

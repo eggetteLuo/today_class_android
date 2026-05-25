@@ -3,6 +3,7 @@ package com.eggetteluo.todayclass.di
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
+import com.eggetteluo.todayclass.data.datastore.ThemePreferencesManager
 import com.eggetteluo.todayclass.data.local.AppDatabase
 import com.eggetteluo.todayclass.data.local.DefaultTimeRules
 import kotlinx.coroutines.CoroutineScope
@@ -12,6 +13,10 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 
 val databaseModule = module {
+
+    single {
+        ThemePreferencesManager(androidContext())
+    }
 
     single {
         lateinit var database: AppDatabase

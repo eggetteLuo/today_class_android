@@ -10,7 +10,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -51,6 +50,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.eggetteluo.todayclass.data.model.CourseStatus
 import com.eggetteluo.todayclass.data.model.TodayCourseDetail
+import com.eggetteluo.todayclass.ui.theme.LocalDarkTheme
 import com.eggetteluo.todayclass.util.CourseColorUtil
 import com.eggetteluo.todayclass.util.DateUtil
 import kotlinx.coroutines.delay
@@ -60,7 +60,7 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun TodayCourseCard(course: TodayCourseDetail, onCardClick: () -> Unit) {
     // 获取当前系统是否为深色模式
-    val isDarkTheme = isSystemInDarkTheme()
+    val isDarkTheme = LocalDarkTheme.current
 
     // 维护当前时间的局部状态，用于驱动课程状态的变化
     var currentTime by remember {
