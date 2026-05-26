@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingToolbarDefaults
 import androidx.compose.material3.HorizontalFloatingToolbar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -65,6 +66,10 @@ fun ScheduleScreen() {
         floatingActionButton = {
             HorizontalFloatingToolbar(
                 expanded = true,
+                colors = FloatingToolbarDefaults.standardFloatingToolbarColors(
+                    toolbarContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                    toolbarContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                ),
                 floatingActionButton = {
                     FloatingActionButton(
                         onClick = { }
