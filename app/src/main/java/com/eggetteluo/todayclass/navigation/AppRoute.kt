@@ -16,4 +16,4 @@ data object SettingRoute : NavKey
 data object UploadRoute : NavKey
 
 @Serializable
-data object ScheduleRoute : NavKey
+data class ScheduleRoute(val scheduleId: Long) : NavKey

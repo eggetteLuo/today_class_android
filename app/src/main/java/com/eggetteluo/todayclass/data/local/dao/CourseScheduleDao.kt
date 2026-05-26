@@ -95,4 +95,9 @@ interface CourseScheduleDao {
     @Query("DELETE FROM course_schedule WHERE semesterId = :semesterId")
     fun deleteSchedulesBySemesterId(semesterId: Long)
 
+    // 获取单条排课记录的完整详情
+    @Transaction
+    @Query("SELECT * FROM course_schedule WHERE id = :scheduleId")
+    suspend fun getScheduleWithDetailsById(scheduleId: Long): ScheduleWithDetails?
+
 }

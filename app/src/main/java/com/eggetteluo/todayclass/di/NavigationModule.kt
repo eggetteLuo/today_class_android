@@ -2,6 +2,7 @@ package com.eggetteluo.todayclass.di
 
 import com.eggetteluo.todayclass.feature.home.HomeScreen
 import com.eggetteluo.todayclass.feature.schedule.ScheduleScreen
+import com.eggetteluo.todayclass.feature.schedule.ScheduleViewModel
 import com.eggetteluo.todayclass.feature.setting.SettingScreen
 import com.eggetteluo.todayclass.feature.upload.UploadScreen
 import com.eggetteluo.todayclass.feature.week.WeekScreen
@@ -11,8 +12,10 @@ import com.eggetteluo.todayclass.navigation.ScheduleRoute
 import com.eggetteluo.todayclass.navigation.SettingRoute
 import com.eggetteluo.todayclass.navigation.UploadRoute
 import com.eggetteluo.todayclass.navigation.WeekRoute
+import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.annotation.KoinExperimentalAPI
 import org.koin.core.module.dsl.singleOf
+import org.koin.core.parameter.parametersOf
 import org.koin.dsl.module
 import org.koin.dsl.navigation3.navigation
 
@@ -37,8 +40,12 @@ val navigationModule = module {
         UploadScreen()
     }
 
-    navigation<ScheduleRoute> {
-        ScheduleScreen()
+    navigation<ScheduleRoute> { route ->
+        val courseId = route.scheduleId
+        val viewModel: ScheduleViewModel = koinViewModel(
+            parameters = { parametersOf(courseId) }
+        )
+        ScheduleScreen(viewModel = viewModel)
     }
 
 }

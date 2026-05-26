@@ -1,6 +1,7 @@
 package com.eggetteluo.todayclass.di
 
 import com.eggetteluo.todayclass.feature.home.HomeViewModel
+import com.eggetteluo.todayclass.feature.schedule.ScheduleViewModel
 import com.eggetteluo.todayclass.feature.setting.SettingViewModel
 import com.eggetteluo.todayclass.feature.upload.UploadViewModel
 import com.eggetteluo.todayclass.feature.week.WeekViewModel
@@ -16,5 +17,7 @@ val viewModelModule = module {
     viewModelOf(::WeekViewModel)
 
     viewModelOf(::SettingViewModel)
+
+    viewModelOf(::ScheduleViewModel)
 
 }

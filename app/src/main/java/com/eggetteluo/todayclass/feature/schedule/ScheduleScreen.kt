@@ -1,15 +1,15 @@
 package com.eggetteluo.todayclass.feature.schedule
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
@@ -24,16 +24,24 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.eggetteluo.todayclass.navigation.Navigator
 import org.koin.compose.koinInject
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun ScheduleScreen() {
+fun ScheduleScreen(
+    viewModel: ScheduleViewModel
+) {
     val navigator: Navigator = koinInject()
+
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
     Scaffold(
         contentWindowInsets = WindowInsets(0.dp),
         topBar = {
@@ -46,12 +54,10 @@ fun ScheduleScreen() {
                     )
                 },
                 navigationIcon = {
-                    IconButton(
-                        onClick = { navigator.back() }
-                    ) {
+                    IconButton(onClick = { navigator.back() }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Navigate back"
+                            contentDescription = "返回"
                         )
                     }
                 },
@@ -66,28 +72,28 @@ fun ScheduleScreen() {
         floatingActionButton = {
             HorizontalFloatingToolbar(
                 expanded = true,
-                colors = FloatingToolbarDefaults.standardFloatingToolbarColors(
-                    toolbarContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                    toolbarContentColor = MaterialTheme.colorScheme.onSurfaceVariant
-                ),
+                colors = FloatingToolbarDefaults.standardFloatingToolbarColors(),
                 floatingActionButton = {
                     FloatingActionButton(
-                        onClick = { }
+                        onClick = { },
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                     ) {
-                        Icon(Icons.Filled.Add, contentDescription = "添加")
+                        Icon(Icons.Filled.Check, contentDescription = "保存")
                     }
                 }
             ) {
-                IconButton(onClick = { }) {
-                    Icon(Icons.Filled.Edit, contentDescription = "编辑")
+                if (uiState is ScheduleUiState.Success && (uiState as ScheduleUiState.Success).scheduleDetails != null) {
+                    IconButton(onClick = { /* TODO 删除逻辑 */ }) {
+                        Icon(
+                            Icons.Filled.Delete,
+                            contentDescription = "删除",
+                            tint = MaterialTheme.colorScheme.error
+                        )
+                    }
                 }
-                IconButton(onClick = { }) {
-                    Icon(Icons.Filled.Delete, contentDescription = "删除")
-                }
-                IconButton(onClick = { }) {
-                    Icon(Icons.Filled.Check, contentDescription = "确认")
-                }
-                IconButton(onClick = { }) {
+
+                IconButton(onClick = { navigator.back() }) {
                     Icon(Icons.Filled.Cancel, contentDescription = "取消")
                 }
             }
@@ -101,7 +107,30 @@ fun ScheduleScreen() {
                     bottom = 0.dp
                 )
         ) {
+            when (val state = uiState) {
+                is ScheduleUiState.Loading -> {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
+                }
 
+                is ScheduleUiState.Error -> {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text("数据加载异常", color = MaterialTheme.colorScheme.error)
+                    }
+                }
+
+                is ScheduleUiState.Success -> {
+                    val details = state.scheduleDetails
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        if (details == null) {
+                            Text("新建课程表单")
+                        } else {
+                            Text("编辑课程表单：${details.course.name}")
+                        }
+                    }
+                }
+            }
         }
     }
 }
