@@ -44,9 +44,10 @@ import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun HomeScreen() {
-    val viewModel: HomeViewModel = koinViewModel()
-    val navigator: Navigator = koinInject()
+fun HomeScreen(
+    viewModel: HomeViewModel,
+    navigator: Navigator
+) {
     val uiState by viewModel.uiState.collectAsState()
 
     Scaffold(
@@ -177,7 +178,7 @@ fun HomeScreen() {
                                     items(state.todayCourses) { course ->
                                         // 课程卡片组件
                                         TodayCourseCard(course = course) {
-                                            navigator.navigate(ScheduleRoute)
+                                            navigator.navigate(ScheduleRoute(course.scheduleId))
                                         }
                                     }
                                 }
