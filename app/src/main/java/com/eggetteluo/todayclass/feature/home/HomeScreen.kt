@@ -39,8 +39,6 @@ import com.eggetteluo.todayclass.navigation.Navigator
 import com.eggetteluo.todayclass.navigation.ScheduleRoute
 import com.eggetteluo.todayclass.navigation.UploadRoute
 import com.eggetteluo.todayclass.ui.components.FabMenu
-import org.koin.compose.koinInject
-import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
