@@ -45,7 +45,7 @@ jobs:
 
       - name: Install Android SDK packages
         run: |
-          sdkmanager --install "platforms;android-37"
+          sdkmanager --install "platforms;android-37.0"
 
       - name: Read app version
         id: app_version
