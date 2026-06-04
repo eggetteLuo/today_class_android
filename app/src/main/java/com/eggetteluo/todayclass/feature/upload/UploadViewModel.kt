@@ -98,12 +98,12 @@ class UploadViewModel(
             try {
                 // 存储或查询学期信息，拿到 semesterId
                 val existingSemester = semesterInfoDao.getSemesterByName(semesterName)
+                val (startTimestamp, endTimestamp) = DateUtil.calculateSemesterDates(
+                    currentWeek = currentWeek,
+                    totalWeeks = 20
+                )
                 val semesterId = if (existingSemester == null) {
                     // 插入学期
-                    val (startTimestamp, endTimestamp) = DateUtil.calculateSemesterDates(
-                        currentWeek = currentWeek,
-                        totalWeeks = 20
-                    )
                     val newSemesterInfo = SemesterInfoEntity(
                         name = semesterName,
                         startDate = startTimestamp,
@@ -119,7 +119,11 @@ class UploadViewModel(
                 } else {
                     // 更新激活状态
                     semesterInfoDao.clearCurrentSemesterStatus()
-                    semesterInfoDao.updateSemester(existingSemester.copy(isCurrent = true))
+                    semesterInfoDao.updateSemester(existingSemester.copy(
+                        isCurrent = true,
+                        startDate = startTimestamp,
+                        endDate = endTimestamp
+                    ))
                     // 删除该学期的排课数据
                     courseScheduleDao.deleteSchedulesBySemesterId(existingSemester.id)
                     // 返回 semesterId
