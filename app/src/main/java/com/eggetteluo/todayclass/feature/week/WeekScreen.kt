@@ -158,8 +158,8 @@ fun WeekScreen() {
                     is WeekUiState.Success -> {
                         WeeklyScheduleLayout(
                             courses = state.weeklyCourses,
-                            onCourseClick = {
-                                navigator.navigate(ScheduleRoute(state.weeklyCourses[0].scheduleId))
+                            onCourseClick = { clickedCourse ->
+                                navigator.navigate(ScheduleRoute(clickedCourse.scheduleId))
                             }
                         )
                     }
