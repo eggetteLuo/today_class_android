@@ -14,8 +14,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Today
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -40,6 +40,7 @@ import com.eggetteluo.todayclass.feature.week.components.ErrorView
 import com.eggetteluo.todayclass.feature.week.components.NoSemesterView
 import com.eggetteluo.todayclass.feature.week.components.WeeklyScheduleLayout
 import com.eggetteluo.todayclass.navigation.Navigator
+import com.eggetteluo.todayclass.navigation.ScheduleRoute
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -51,7 +52,8 @@ fun WeekScreen() {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     Scaffold(
-        contentWindowInsets = WindowInsets(0.dp), topBar = {
+        contentWindowInsets = WindowInsets(0.dp),
+        topBar = {
             TopAppBar(
                 title = {
                     Column(verticalArrangement = Arrangement.Center) {
@@ -71,7 +73,8 @@ fun WeekScreen() {
                             )
                         }
                     }
-                }, actions = {
+                },
+                actions = {
                     val state = uiState
                     if (state is WeekUiState.Success) {
                         // 上一周按钮
@@ -80,7 +83,7 @@ fun WeekScreen() {
                             enabled = state.selectedWeek > 1
                         ) {
                             Icon(
-                                imageVector = Icons.Default.KeyboardArrowLeft,
+                                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
                                 contentDescription = "Previous Week"
                             )
                         }
@@ -91,7 +94,7 @@ fun WeekScreen() {
                             enabled = state.selectedWeek < state.totalWeeks
                         ) {
                             Icon(
-                                imageVector = Icons.Default.KeyboardArrowRight,
+                                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                                 contentDescription = "Next Week"
                             )
                         }
@@ -117,7 +120,8 @@ fun WeekScreen() {
                             }
                         }
                     }
-                }, colors = TopAppBarDefaults.topAppBarColors(
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     titleContentColor = MaterialTheme.colorScheme.primary,
                     scrolledContainerColor = MaterialTheme.colorScheme.primaryContainer
@@ -154,7 +158,9 @@ fun WeekScreen() {
                     is WeekUiState.Success -> {
                         WeeklyScheduleLayout(
                             courses = state.weeklyCourses,
-                            onCourseClick = { }
+                            onCourseClick = {
+                                navigator.navigate(ScheduleRoute(state.weeklyCourses[0].scheduleId))
+                            }
                         )
                     }
                 }
