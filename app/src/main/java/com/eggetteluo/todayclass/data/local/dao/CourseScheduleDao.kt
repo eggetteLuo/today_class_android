@@ -5,6 +5,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
+import androidx.room.Update
 import com.eggetteluo.todayclass.data.local.entity.CourseScheduleEntity
 import com.eggetteluo.todayclass.data.local.entity.CourseScheduleWeekEntity
 import com.eggetteluo.todayclass.data.local.relation.ScheduleWithDetails
@@ -99,5 +100,17 @@ interface CourseScheduleDao {
     @Transaction
     @Query("SELECT * FROM course_schedule WHERE id = :scheduleId")
     suspend fun getScheduleWithDetailsById(scheduleId: Long): ScheduleWithDetails?
+
+    // 更新排课主表记录
+    @Update
+    suspend fun updateSchedule(schedule: CourseScheduleEntity)
+
+    // 更新课程表的任课教师 (只更新特定字段，避免覆盖其它重要数据)
+    @Query("UPDATE course SET teacherName = :teacherName WHERE id = :courseId")
+    suspend fun updateCourseTeacher(courseId: Long, teacherName: String)
+
+    // 根据排课ID删除其关联的所有周次记录 (用于更新周次时的"先删后插"策略)
+    @Query("DELETE FROM course_schedule_week WHERE scheduleId = :scheduleId")
+    suspend fun deleteWeeksByScheduleId(scheduleId: Long)
 
 }

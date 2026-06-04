@@ -29,7 +29,7 @@ val navigationModule = module {
     navigation<HomeRoute> {
         val viewModel: HomeViewModel = koinViewModel()
         val navigator: Navigator = koinInject()
-        HomeScreen(viewModel, navigator)
+        HomeScreen(viewModel = viewModel, navigator = navigator)
     }
 
     navigation<WeekRoute> {
@@ -47,9 +47,11 @@ val navigationModule = module {
     navigation<ScheduleRoute> { route ->
         val courseId = route.scheduleId
         val viewModel: ScheduleViewModel = koinViewModel(
+            key = courseId.toString(),
             parameters = { parametersOf(courseId) }
         )
-        ScheduleScreen(viewModel = viewModel)
+        val navigator: Navigator = koinInject()
+        ScheduleScreen(viewModel = viewModel, navigator = navigator)
     }
 
 }

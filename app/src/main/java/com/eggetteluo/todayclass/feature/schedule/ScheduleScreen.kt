@@ -1,15 +1,27 @@
 package com.eggetteluo.todayclass.feature.schedule
 
+import android.util.Log
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
@@ -18,29 +30,126 @@ import androidx.compose.material3.HorizontalFloatingToolbar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.eggetteluo.todayclass.navigation.Navigator
-import org.koin.compose.koinInject
+import com.eggetteluo.todayclass.ui.root.LocalSnackbarHostState
+import kotlinx.coroutines.flow.collectLatest
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ScheduleScreen(
-    viewModel: ScheduleViewModel
+    viewModel: ScheduleViewModel,
+    navigator: Navigator
 ) {
-    val navigator: Navigator = koinInject()
-
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val globalSnackbarHostState = LocalSnackbarHostState.current
+
+    // 声明表单输入的受控状态
+    var courseName by remember { mutableStateOf("") }
+    var courseCode by remember { mutableStateOf("") }
+    var teacherName by remember { mutableStateOf("") }
+    var classRoom by remember { mutableStateOf("") }
+    var weekDay by remember { mutableStateOf("") }
+    var section by remember { mutableStateOf("") }
+    var weeksDisplay by remember { mutableStateOf("") }
+    var rawText by remember { mutableStateOf("") }
+
+    // 弹窗控制状态
+    val showSaveDialog = remember { mutableStateOf(false) }
+    val showDeleteDialog = remember { mutableStateOf(false) }
+
+    val isEditing = uiState is ScheduleUiState.Success
+            && (uiState as ScheduleUiState.Success).scheduleDetails != null
+
+    // 监听 ViewModel 传来的单次事件（如保存成功、删除成功等）
+    LaunchedEffect(Unit) {
+        viewModel.uiEvent.collectLatest { event ->
+            when (event) {
+                is ScheduleUiEvent.SaveSuccess -> {
+                    Log.d("ScheduleScreen", "Navigation back triggered by save/delete success")
+                    navigator.back()
+                }
+
+                is ScheduleUiEvent.ShowError -> {
+                    Log.e("ScheduleScreen", "ShowError event: ${event.message}")
+                    globalSnackbarHostState.showSnackbar("发生错误: ${event.message}")
+                }
+            }
+        }
+    }
+
+    // --- 弹窗组件 ---
+    if (showSaveDialog.value) {
+        AlertDialog(
+            onDismissRequest = { showSaveDialog.value = false },
+            title = { Text(text = "确认保存") },
+            text = { Text(text = "是否保存对课程信息的修改？") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showSaveDialog.value = false
+                        Log.d("ScheduleScreen", "Confirm save clicked")
+                        viewModel.saveSchedule(
+                            teacherName = teacherName,
+                            classRoom = classRoom,
+                            weekDayStr = weekDay,
+                            sectionStr = section,
+                            weeksDisplay = weeksDisplay
+                        )
+                    }
+                ) {
+                    Text("保存")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showSaveDialog.value = false }) {
+                    Text("取消")
+                }
+            }
+        )
+    }
+
+    if (showDeleteDialog.value) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog.value = false },
+            title = { Text(text = "确认删除") },
+            text = { Text(text = "是否确认删除该课程排课？此操作不可恢复。") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showDeleteDialog.value = false
+                        Log.d("ScheduleScreen", "Confirm delete clicked")
+                        viewModel.deleteSchedule()
+                    }
+                ) {
+                    Text("删除", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog.value = false }) {
+                    Text("取消")
+                }
+            }
+        )
+    }
 
     Scaffold(
         contentWindowInsets = WindowInsets(0.dp),
@@ -48,17 +157,14 @@ fun ScheduleScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "课程编辑",
+                        text = if (isEditing) "编辑课程" else "新建课程",
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
                 },
                 navigationIcon = {
                     IconButton(onClick = { navigator.back() }) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "返回"
-                        )
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -75,7 +181,10 @@ fun ScheduleScreen(
                 colors = FloatingToolbarDefaults.standardFloatingToolbarColors(),
                 floatingActionButton = {
                     FloatingActionButton(
-                        onClick = { },
+                        onClick = {
+                            // 触发保存弹窗
+                            showSaveDialog.value = true
+                        },
                         containerColor = MaterialTheme.colorScheme.primaryContainer,
                         contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                     ) {
@@ -83,8 +192,13 @@ fun ScheduleScreen(
                     }
                 }
             ) {
-                if (uiState is ScheduleUiState.Success && (uiState as ScheduleUiState.Success).scheduleDetails != null) {
-                    IconButton(onClick = { /* TODO 删除逻辑 */ }) {
+                if (isEditing) {
+                    IconButton(
+                        onClick = {
+                            // 触发删除弹窗
+                            showDeleteDialog.value = true
+                        }
+                    ) {
                         Icon(
                             Icons.Filled.Delete,
                             contentDescription = "删除",
@@ -92,7 +206,6 @@ fun ScheduleScreen(
                         )
                     }
                 }
-
                 IconButton(onClick = { navigator.back() }) {
                     Icon(Icons.Filled.Cancel, contentDescription = "取消")
                 }
@@ -102,10 +215,8 @@ fun ScheduleScreen(
         Surface(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(
-                    top = innerPadding.calculateTopPadding(),
-                    bottom = 0.dp
-                )
+                .padding(top = innerPadding.calculateTopPadding(), bottom = 0.dp),
+            color = MaterialTheme.colorScheme.surface // 使用标准背景色
         ) {
             when (val state = uiState) {
                 is ScheduleUiState.Loading -> {
@@ -122,15 +233,139 @@ fun ScheduleScreen(
 
                 is ScheduleUiState.Success -> {
                     val details = state.scheduleDetails
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        if (details == null) {
-                            Text("新建课程表单")
-                        } else {
-                            Text("编辑课程表单：${details.course.name}")
+
+                    // 同步数据库数据到 UI 状态
+                    LaunchedEffect(details) {
+                        details?.let {
+                            courseName = it.course.name
+                            courseCode = it.course.code
+                            teacherName = it.course.teacherName
+                            classRoom = it.schedule.classRoom
+                            weekDay = it.schedule.weekDay.toString()
+                            section = it.schedule.section.toString()
+                            rawText = it.schedule.rawText
+                            weeksDisplay =
+                                it.weeks.map { week -> week.weekNo }.sorted().joinToString(", ")
                         }
+                    }
+
+                    // 表单主内容布局
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 16.dp)
+                            .verticalScroll(rememberScrollState()),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        // 模块一：课程基本信息
+                        FormCard(title = "课程基本信息") {
+                            FormTextField(value = courseName, label = "课程名称", readOnly = true)
+                            FormTextField(value = courseCode, label = "课程代码", readOnly = true)
+                            FormTextField(
+                                value = teacherName,
+                                label = "任课教师",
+                                onValueChange = { teacherName = it }
+                            )
+                        }
+
+                        // 模块二：排课及上课地点
+                        FormCard(title = "排课及上课地点") {
+                            FormTextField(
+                                value = classRoom,
+                                label = "完整上课地点",
+                                onValueChange = { classRoom = it }
+                            )
+                            FormTextField(
+                                value = weekDay,
+                                label = "星期（如: 1 表示周一）",
+                                onValueChange = { weekDay = it },
+                                keyboardType = KeyboardType.Number
+                            )
+                            FormTextField(
+                                value = section,
+                                label = "上课节次（第几节）",
+                                onValueChange = { section = it },
+                                keyboardType = KeyboardType.Number
+                            )
+                            FormTextField(
+                                value = weeksDisplay,
+                                label = "上课周次（逗号分隔）",
+                                onValueChange = { weeksDisplay = it }
+                            )
+                        }
+
+                        // 模块三：原始单元格内容卡片
+                        if (rawText.isNotEmpty()) {
+                            FormCard(title = "系统导入记录", isVariantStyle = true) {
+                                FormTextField(
+                                    value = rawText,
+                                    label = "原始单元格内容",
+                                    readOnly = true,
+                                    minLines = 3
+                                )
+                            }
+                        }
+
+                        // 底部留白，防止被工具栏遮挡
+                        Spacer(modifier = Modifier.height(100.dp))
                     }
                 }
             }
         }
     }
+}
+
+// ---------------- 提取的可复用组件 ----------------
+
+@Composable
+private fun FormCard(
+    title: String,
+    isVariantStyle: Boolean = false,
+    content: @Composable () -> Unit
+) {
+    ElevatedCard(
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = if (isVariantStyle) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.elevatedCardElevation(
+            defaultElevation = if (isVariantStyle) 0.dp else 2.dp
+        ),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.primary
+            )
+            content()
+        }
+    }
+}
+
+@Composable
+private fun FormTextField(
+    value: String,
+    label: String,
+    onValueChange: (String) -> Unit = {},
+    readOnly: Boolean = false,
+    keyboardType: KeyboardType = KeyboardType.Text,
+    minLines: Int = 1
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        readOnly = readOnly,
+        label = { Text(label) },
+        keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+        minLines = minLines,
+        modifier = Modifier.fillMaxWidth()
+    )
 }

@@ -7,3 +7,8 @@ sealed interface ScheduleUiState {
     data class Success(val scheduleDetails: ScheduleWithDetails?) : ScheduleUiState
     data object Error : ScheduleUiState
 }
+
+sealed interface ScheduleUiEvent {
+    data object SaveSuccess : ScheduleUiEvent
+    data class ShowError(val message: String) : ScheduleUiEvent
+}
