@@ -39,16 +39,14 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.eggetteluo.todayclass.feature.week.components.ErrorView
 import com.eggetteluo.todayclass.feature.week.components.NoSemesterView
 import com.eggetteluo.todayclass.feature.week.components.WeeklyScheduleLayout
-import com.eggetteluo.todayclass.navigation.Navigator
-import com.eggetteluo.todayclass.navigation.ScheduleRoute
-import org.koin.compose.koinInject
-import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun WeekScreen() {
-    val viewModel: WeekViewModel = koinViewModel()
-    val navigator: Navigator = koinInject()
+fun WeekScreen(
+    viewModel: WeekViewModel,
+    onUploadClick: () -> Unit,
+    onCourseClick: (Long) -> Unit
+) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     Scaffold(
@@ -148,7 +146,7 @@ fun WeekScreen() {
                     }
 
                     is WeekUiState.NoActiveSemester -> {
-                        NoSemesterView(navigator)
+                        NoSemesterView(onUploadClick = onUploadClick)
                     }
 
                     is WeekUiState.Error -> {
@@ -159,7 +157,7 @@ fun WeekScreen() {
                         WeeklyScheduleLayout(
                             courses = state.weeklyCourses,
                             onCourseClick = { clickedCourse ->
-                                navigator.navigate(ScheduleRoute(clickedCourse.scheduleId))
+                                onCourseClick(clickedCourse.scheduleId)
                             }
                         )
                     }

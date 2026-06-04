@@ -16,11 +16,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.eggetteluo.todayclass.navigation.Navigator
-import com.eggetteluo.todayclass.navigation.UploadRoute
 
 @Composable
-fun NoSemesterView(navigator: Navigator) {
+fun NoSemesterView(onUploadClick: () -> Unit) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Icon(
             imageVector = Icons.TwoTone.CalendarToday,
@@ -38,7 +36,7 @@ fun NoSemesterView(navigator: Navigator) {
         )
         Spacer(modifier = Modifier.height(32.dp))
         Button(
-            onClick = { navigator.navigate(UploadRoute) },
+            onClick = onUploadClick,
             contentPadding = PaddingValues(horizontal = 32.dp, vertical = 14.dp)
         ) {
             Text("去导入课表", style = MaterialTheme.typography.titleMedium)

@@ -26,27 +26,25 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.eggetteluo.todayclass.feature.home.components.EmptyScheduleState
 import com.eggetteluo.todayclass.feature.home.components.TodayCourseCard
-import com.eggetteluo.todayclass.navigation.Navigator
-import com.eggetteluo.todayclass.navigation.ScheduleRoute
-import com.eggetteluo.todayclass.navigation.UploadRoute
 import com.eggetteluo.todayclass.ui.components.FabMenu
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel,
-    navigator: Navigator
+    onUploadClick: () -> Unit,
+    onCourseClick: (Long) -> Unit
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     Scaffold(
         contentWindowInsets = WindowInsets(0.dp),
@@ -81,9 +79,7 @@ fun HomeScreen(
         },
         floatingActionButton = {
             FabMenu(
-                onUploadClick = {
-                    navigator.navigate(UploadRoute)
-                },
+                onUploadClick = onUploadClick,
                 onAddClick = {
 
                 },
@@ -132,9 +128,7 @@ fun HomeScreen(
                             )
                             Spacer(modifier = Modifier.height(32.dp))
                             Button(
-                                onClick = {
-                                    navigator.navigate(UploadRoute)
-                                },
+                                onClick = onUploadClick,
                                 contentPadding = PaddingValues(horizontal = 32.dp, vertical = 14.dp)
                             ) {
                                 Text("去导入课表", style = MaterialTheme.typography.titleMedium)
@@ -176,7 +170,7 @@ fun HomeScreen(
                                     items(state.todayCourses) { course ->
                                         // 课程卡片组件
                                         TodayCourseCard(course = course) {
-                                            navigator.navigate(ScheduleRoute(course.scheduleId))
+                                            onCourseClick(course.scheduleId)
                                         }
                                     }
                                 }

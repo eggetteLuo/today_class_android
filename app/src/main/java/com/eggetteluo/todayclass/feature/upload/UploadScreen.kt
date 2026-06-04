@@ -40,24 +40,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.eggetteluo.todayclass.feature.upload.components.CourseItemCard
 import com.eggetteluo.todayclass.feature.upload.components.WeekSelectionDialog
-import com.eggetteluo.todayclass.navigation.Navigator
 import com.eggetteluo.todayclass.ui.root.LocalSnackbarHostState
 import io.github.vinceglb.filekit.compose.rememberFilePickerLauncher
 import io.github.vinceglb.filekit.core.PickerMode
 import io.github.vinceglb.filekit.core.PickerType
-import org.koin.compose.koinInject
-import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun UploadScreen(
-    viewModel: UploadViewModel = koinViewModel()
+    viewModel: UploadViewModel,
+    onBackClick: () -> Unit
 ) {
-    val navigator: Navigator = koinInject()
-
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val globalSnackbarHostState = LocalSnackbarHostState.current
 
     var showWeekDialog by remember { mutableStateOf(false) }
@@ -301,7 +298,7 @@ fun UploadScreen(
                             )
                             Spacer(modifier = Modifier.height(40.dp))
                             Button(
-                                onClick = { navigator.back() },
+                                onClick = onBackClick,
                                 contentPadding = PaddingValues(horizontal = 32.dp, vertical = 14.dp)
                             ) {
                                 Text(

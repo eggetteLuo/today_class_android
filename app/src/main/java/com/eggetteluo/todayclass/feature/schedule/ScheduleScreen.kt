@@ -59,7 +59,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.eggetteluo.todayclass.navigation.Navigator
 import com.eggetteluo.todayclass.ui.root.LocalSnackbarHostState
 import kotlinx.coroutines.flow.collectLatest
 
@@ -67,7 +66,7 @@ import kotlinx.coroutines.flow.collectLatest
 @Composable
 fun ScheduleScreen(
     viewModel: ScheduleViewModel,
-    navigator: Navigator
+    onBackClick: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val globalSnackbarHostState = LocalSnackbarHostState.current
@@ -100,7 +99,7 @@ fun ScheduleScreen(
             when (event) {
                 is ScheduleUiEvent.SaveSuccess -> {
                     Log.d("ScheduleScreen", "Navigation back triggered by save/delete success")
-                    navigator.back()
+                    onBackClick()
                 }
 
                 is ScheduleUiEvent.ShowError -> {
@@ -178,7 +177,7 @@ fun ScheduleScreen(
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = { navigator.back() }) {
+                    IconButton(onClick = onBackClick) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
                     }
                 },
@@ -213,7 +212,7 @@ fun ScheduleScreen(
                         )
                     }
                 }
-                IconButton(onClick = { navigator.back() }) {
+                IconButton(onClick = onBackClick) {
                     Icon(Icons.Filled.Cancel, contentDescription = "取消")
                 }
             }

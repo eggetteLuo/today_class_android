@@ -5,8 +5,11 @@ import com.eggetteluo.todayclass.feature.home.HomeViewModel
 import com.eggetteluo.todayclass.feature.schedule.ScheduleScreen
 import com.eggetteluo.todayclass.feature.schedule.ScheduleViewModel
 import com.eggetteluo.todayclass.feature.setting.SettingScreen
+import com.eggetteluo.todayclass.feature.setting.SettingViewModel
 import com.eggetteluo.todayclass.feature.upload.UploadScreen
+import com.eggetteluo.todayclass.feature.upload.UploadViewModel
 import com.eggetteluo.todayclass.feature.week.WeekScreen
+import com.eggetteluo.todayclass.feature.week.WeekViewModel
 import com.eggetteluo.todayclass.navigation.HomeRoute
 import com.eggetteluo.todayclass.navigation.Navigator
 import com.eggetteluo.todayclass.navigation.ScheduleRoute
@@ -29,19 +32,39 @@ val navigationModule = module {
     navigation<HomeRoute> {
         val viewModel: HomeViewModel = koinViewModel()
         val navigator: Navigator = koinInject()
-        HomeScreen(viewModel = viewModel, navigator = navigator)
+        HomeScreen(
+            viewModel = viewModel,
+            onUploadClick = { navigator.navigate(UploadRoute) },
+            onCourseClick = { scheduleId ->
+                navigator.navigate(ScheduleRoute(scheduleId))
+            }
+        )
     }
 
     navigation<WeekRoute> {
-        WeekScreen()
+        val viewModel: WeekViewModel = koinViewModel()
+        val navigator: Navigator = koinInject()
+        WeekScreen(
+            viewModel = viewModel,
+            onUploadClick = { navigator.navigate(UploadRoute) },
+            onCourseClick = { scheduleId ->
+                navigator.navigate(ScheduleRoute(scheduleId))
+            }
+        )
     }
 
     navigation<SettingRoute> {
-        SettingScreen()
+        val viewModel: SettingViewModel = koinViewModel()
+        SettingScreen(viewModel = viewModel)
     }
 
     navigation<UploadRoute> {
-        UploadScreen()
+        val viewModel: UploadViewModel = koinViewModel()
+        val navigator: Navigator = koinInject()
+        UploadScreen(
+            viewModel = viewModel,
+            onBackClick = { navigator.back() }
+        )
     }
 
     navigation<ScheduleRoute> { route ->
@@ -51,7 +74,10 @@ val navigationModule = module {
             parameters = { parametersOf(courseId) }
         )
         val navigator: Navigator = koinInject()
-        ScheduleScreen(viewModel = viewModel, navigator = navigator)
+        ScheduleScreen(
+            viewModel = viewModel,
+            onBackClick = { navigator.back() }
+        )
     }
 
 }

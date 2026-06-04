@@ -23,12 +23,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.eggetteluo.todayclass.feature.setting.component.SettingCardItem
 import com.eggetteluo.todayclass.feature.setting.component.ThemeSelectionDialog
 import com.eggetteluo.todayclass.util.getDisplayName
-import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingScreen() {
-    val viewModel: SettingViewModel = koinViewModel()
+fun SettingScreen(
+    viewModel: SettingViewModel
+) {
     val currentTheme by viewModel.currentTheme.collectAsStateWithLifecycle()
 
     val showThemeDialog = remember { mutableStateOf(false) }
