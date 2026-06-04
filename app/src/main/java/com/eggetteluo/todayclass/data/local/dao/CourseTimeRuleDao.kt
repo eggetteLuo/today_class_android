@@ -24,6 +24,13 @@ interface CourseTimeRuleDao {
 
     // 根据楼栋类型和节次查询时间规则
     @Query("SELECT * FROM course_time_rule WHERE buildingType = :buildingType AND sectionNo = :sectionNo")
-    suspend fun getRuleByBuildingAndSection(buildingType: String, sectionNo: Int): CourseTimeRuleEntity?
+    suspend fun getRuleByBuildingAndSection(
+        buildingType: String,
+        sectionNo: Int
+    ): CourseTimeRuleEntity?
+
+    // 根据主键 ID (ruleId) 精确查询时间规则
+    @Query("SELECT * FROM course_time_rule WHERE id = :ruleId")
+    suspend fun getRuleById(ruleId: Long): CourseTimeRuleEntity?
 
 }
