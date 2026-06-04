@@ -1,0 +1,141 @@
+name: Release APK
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: "Release tag name. Leave empty to use v{versionName}-{versionCode}."
+        required: false
+        type: string
+      prerelease:
+        description: "Mark this release as a prerelease."
+        required: false
+        default: false
+        type: boolean
+  push:
+    tags:
+      - "v*"
+      - "*-v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and publish release APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Install Android SDK packages
+        run: |
+          yes | sdkmanager --licenses >/dev/null
+          sdkmanager "platforms;android-37"
+
+      - name: Read app version
+        id: app_version
+        shell: bash
+        run: |
+          VERSION_NAME="$(sed -nE 's/^[[:space:]]*versionName[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' app/build.gradle.kts | head -n 1)"
+          VERSION_CODE="$(sed -nE 's/^[[:space:]]*versionCode[[:space:]]*=[[:space:]]*([0-9]+).*/\1/p' app/build.gradle.kts | head -n 1)"
+
+          if [[ -z "$VERSION_NAME" || -z "$VERSION_CODE" ]]; then
+            echo "Failed to read versionName/versionCode from app/build.gradle.kts" >&2
+            exit 1
+          fi
+
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" && -n "${{ inputs.tag_name }}" ]]; then
+            TAG_NAME="${{ inputs.tag_name }}"
+          elif [[ "${{ github.event_name }}" == "push" ]]; then
+            TAG_NAME="${GITHUB_REF_NAME}"
+          else
+            TAG_NAME="v${VERSION_NAME}-${VERSION_CODE}"
+          fi
+
+          APK_NAME="TodayClass-${VERSION_NAME}-v${VERSION_CODE}-release.apk"
+
+          echo "version_name=${VERSION_NAME}" >> "$GITHUB_OUTPUT"
+          echo "version_code=${VERSION_CODE}" >> "$GITHUB_OUTPUT"
+          echo "tag_name=${TAG_NAME}" >> "$GITHUB_OUTPUT"
+          echo "apk_name=${APK_NAME}" >> "$GITHUB_OUTPUT"
+          echo "apk_path=app/build/outputs/apk/release/${APK_NAME}" >> "$GITHUB_OUTPUT"
+
+      - name: Prepare release signing key
+        shell: bash
+        env:
+          RELEASE_KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+          RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+        run: |
+          missing=0
+          for name in RELEASE_KEYSTORE_BASE64 RELEASE_KEYSTORE_PASSWORD RELEASE_KEY_ALIAS RELEASE_KEY_PASSWORD; do
+            if [[ -z "${!name}" ]]; then
+              echo "::error::GitHub secret ${name} is required for release signing."
+              missing=1
+            fi
+          done
+
+          if [[ "$missing" -ne 0 ]]; then
+            exit 1
+          fi
+
+          KEYSTORE_PATH="${RUNNER_TEMP}/release-key.jks"
+          echo "$RELEASE_KEYSTORE_BASE64" | base64 --decode > "$KEYSTORE_PATH"
+
+          echo "SIGNING_KEY_STORE_PATH=${KEYSTORE_PATH}" >> "$GITHUB_ENV"
+          echo "SIGNING_KEY_STORE_PASSWORD=${RELEASE_KEYSTORE_PASSWORD}" >> "$GITHUB_ENV"
+          echo "SIGNING_KEY_ALIAS=${RELEASE_KEY_ALIAS}" >> "$GITHUB_ENV"
+          echo "SIGNING_KEY_PASSWORD=${RELEASE_KEY_PASSWORD}" >> "$GITHUB_ENV"
+
+      - name: Build release APK
+        run: ./gradlew testDebugUnitTest assembleRelease
+
+      - name: Verify APK output
+        shell: bash
+        run: |
+          test -f "${{ steps.app_version.outputs.apk_path }}"
+
+      - name: Verify APK signature
+        shell: bash
+        run: |
+          APKSIGNER="$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -n 1)"
+          if [[ -z "$APKSIGNER" ]]; then
+            echo "::error::apksigner not found in Android SDK build-tools."
+            exit 1
+          fi
+
+          "$APKSIGNER" verify --verbose "${{ steps.app_version.outputs.apk_path }}"
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PRERELEASE: ${{ inputs.prerelease || false }}
+        run: |
+          RELEASE_ARGS=()
+          if [[ "$PRERELEASE" == "true" ]]; then
+            RELEASE_ARGS+=(--prerelease)
+          fi
+
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            RELEASE_ARGS+=(--target "$GITHUB_SHA")
+          fi
+
+          gh release create "${{ steps.app_version.outputs.tag_name }}" \
+            "${{ steps.app_version.outputs.apk_path }}" \
+            --title "TodayClass ${{ steps.app_version.outputs.version_name }} (${{ steps.app_version.outputs.version_code }})" \
+            --notes "Release APK: ${{ steps.app_version.outputs.apk_name }}" \
+            "${RELEASE_ARGS[@]}"

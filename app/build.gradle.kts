@@ -5,6 +5,17 @@ plugins {
     alias(libs.plugins.ksp)
 }
 
+val releaseSigningStoreFile = providers.environmentVariable("SIGNING_KEY_STORE_PATH")
+val releaseSigningStorePassword = providers.environmentVariable("SIGNING_KEY_STORE_PASSWORD")
+val releaseSigningKeyAlias = providers.environmentVariable("SIGNING_KEY_ALIAS")
+val releaseSigningKeyPassword = providers.environmentVariable("SIGNING_KEY_PASSWORD")
+val hasReleaseSigningConfig = listOf(
+    releaseSigningStoreFile,
+    releaseSigningStorePassword,
+    releaseSigningKeyAlias,
+    releaseSigningKeyPassword
+).all { it.isPresent }
+
 android {
     namespace = "com.eggetteluo.todayclass"
     compileSdk = 37
@@ -17,10 +28,24 @@ android {
         versionName = "1.1.0"
     }
 
+    signingConfigs {
+        if (hasReleaseSigningConfig) {
+            create("release") {
+                storeFile = file(releaseSigningStoreFile.get())
+                storePassword = releaseSigningStorePassword.get()
+                keyAlias = releaseSigningKeyAlias.get()
+                keyPassword = releaseSigningKeyPassword.get()
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
+            if (hasReleaseSigningConfig) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -33,6 +58,19 @@ android {
     }
     buildFeatures {
         compose = true
+    }
+}
+
+androidComponents {
+    onVariants { variant ->
+        variant.outputs.forEach { output ->
+            val apkFileName = output.versionName.orElse("unknown")
+                .zip(output.versionCode.orElse(0)) { versionName, versionCode ->
+                    "TodayClass-$versionName-v$versionCode-${variant.buildType}.apk"
+                }
+
+            output.outputFileName.set(apkFileName)
+        }
     }
 }
 

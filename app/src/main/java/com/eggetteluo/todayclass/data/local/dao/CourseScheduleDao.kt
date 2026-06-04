@@ -94,7 +94,7 @@ interface CourseScheduleDao {
     ): Flow<List<WeeklyCourseDetail>>
 
     @Query("DELETE FROM course_schedule WHERE semesterId = :semesterId")
-    fun deleteSchedulesBySemesterId(semesterId: Long)
+    suspend fun deleteSchedulesBySemesterId(semesterId: Long)
 
     // 获取单条排课记录的完整详情
     @Transaction
