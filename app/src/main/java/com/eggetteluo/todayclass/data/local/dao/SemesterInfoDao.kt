@@ -23,6 +23,9 @@ interface SemesterInfoDao {
     @Query("SELECT * FROM semester_info WHERE isCurrent = 1 LIMIT 1")
     fun getCurrentSemester(): Flow<SemesterInfoEntity?>
 
+    @Query("SELECT * FROM semester_info ORDER BY startDate DESC")
+    fun getAllSemesters(): Flow<List<SemesterInfoEntity>>
+
     // 将所有学期的 isCurrent 设置为 false（通常用于切换当前学期前重置状态）
     @Query("UPDATE semester_info SET isCurrent = 0")
     suspend fun clearCurrentSemesterStatus()
@@ -30,5 +33,11 @@ interface SemesterInfoDao {
     // 根据学期名称查找学期
     @Query("SELECT * FROM semester_info WHERE name = :semesterName")
     suspend fun getSemesterByName(semesterName: String): SemesterInfoEntity?
+
+    @Query("SELECT * FROM semester_info WHERE id = :semesterId")
+    suspend fun getSemesterById(semesterId: Long): SemesterInfoEntity?
+
+    @Query("DELETE FROM semester_info WHERE id = :semesterId")
+    suspend fun deleteSemesterById(semesterId: Long)
 
 }

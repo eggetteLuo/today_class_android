@@ -26,7 +26,7 @@ fun SettingCardItem(
     title: String,
     subtitle: String,
     onClick: () -> Unit,
-    action: @Composable () -> Unit
+    action: @Composable () -> Unit = {}
 ) {
     Surface(
         modifier = Modifier

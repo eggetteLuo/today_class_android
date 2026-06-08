@@ -3,15 +3,21 @@ package com.eggetteluo.todayclass.feature.schedule
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.eggetteluo.todayclass.data.local.dao.CourseDao
 import com.eggetteluo.todayclass.data.local.dao.CourseScheduleDao
 import com.eggetteluo.todayclass.data.local.dao.CourseTimeRuleDao
+import com.eggetteluo.todayclass.data.local.dao.SemesterInfoDao
+import com.eggetteluo.todayclass.data.local.entity.CourseEntity
+import com.eggetteluo.todayclass.data.local.entity.CourseScheduleEntity
 import com.eggetteluo.todayclass.data.local.entity.CourseScheduleWeekEntity
+import com.eggetteluo.todayclass.util.CourseUtil
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -20,8 +26,10 @@ import kotlinx.coroutines.launch
  * 负责管理排课详情的加载、修改保存和删除逻辑。
  */
 class ScheduleViewModel(
+    private val courseDao: CourseDao,
     private val courseScheduleDao: CourseScheduleDao,
     private val courseTimeRuleDao: CourseTimeRuleDao,
+    private val semesterInfoDao: SemesterInfoDao,
     private val scheduleId: Long
 ) : ViewModel() {
 
@@ -73,6 +81,8 @@ class ScheduleViewModel(
      * 包括：任课教师、上课地点、星期、节次，以及上课周次列表。
      */
     fun saveSchedule(
+        courseName: String,
+        courseCode: String,
         teacherName: String,
         classRoom: String,
         weekDayStr: String,
@@ -84,8 +94,15 @@ class ScheduleViewModel(
 
         val details = currentState.scheduleDetails
         if (details == null) {
-            // TODO: 新建课程逻辑尚未实现
-            Log.w("ScheduleViewModel", "Create new schedule logic is pending")
+            createSchedule(
+                courseName = courseName,
+                courseCode = courseCode,
+                teacherName = teacherName,
+                classRoom = classRoom,
+                weekDayStr = weekDayStr,
+                sectionStr = sectionStr,
+                weeksDisplay = weeksDisplay
+            )
             return
         }
 
@@ -129,6 +146,102 @@ class ScheduleViewModel(
         }
     }
 
+    private fun createSchedule(
+        courseName: String,
+        courseCode: String,
+        teacherName: String,
+        classRoom: String,
+        weekDayStr: String,
+        sectionStr: String,
+        weeksDisplay: String
+    ) {
+        viewModelScope.launch {
+            try {
+                val cleanCourseName = courseName.trim()
+                val cleanCourseCode = courseCode.trim().ifBlank {
+                    "manual-${System.currentTimeMillis()}"
+                }
+                val weekDay = weekDayStr.toIntOrNull()
+                val section = sectionStr.toIntOrNull()
+                val weeks = parseWeeksInput(weeksDisplay)
+
+                if (cleanCourseName.isBlank()) {
+                    _uiEvent.emit(ScheduleUiEvent.ShowError("请输入课程名称"))
+                    return@launch
+                }
+                if (weekDay == null || weekDay !in 1..7) {
+                    _uiEvent.emit(ScheduleUiEvent.ShowError("星期必须是 1 到 7"))
+                    return@launch
+                }
+                if (section == null || section !in 1..12) {
+                    _uiEvent.emit(ScheduleUiEvent.ShowError("节次必须是 1 到 12"))
+                    return@launch
+                }
+                if (weeks.isEmpty()) {
+                    _uiEvent.emit(ScheduleUiEvent.ShowError("请填写上课周次"))
+                    return@launch
+                }
+
+                val semester = semesterInfoDao.getCurrentSemester().firstOrNull()
+                if (semester == null) {
+                    _uiEvent.emit(ScheduleUiEvent.ShowError("请先导入或创建当前学期"))
+                    return@launch
+                }
+
+                val conflictCount = courseScheduleDao.countConflictingSchedules(
+                    semesterId = semester.id,
+                    weekDay = weekDay,
+                    section = section,
+                    weeks = weeks
+                )
+                if (conflictCount > 0) {
+                    _uiEvent.emit(ScheduleUiEvent.ShowError("该时间已有课程，请先调整周次或节次"))
+                    return@launch
+                }
+
+                val existingCourse = courseDao.getCourseByCode(cleanCourseCode)
+                val courseId = existingCourse?.id ?: courseDao.insertCourse(
+                    CourseEntity(
+                        code = cleanCourseCode,
+                        name = cleanCourseName,
+                        teacherName = teacherName.trim(),
+                        type = "",
+                        remark = ""
+                    )
+                )
+
+                val buildingType = CourseUtil.parseBuildingType(classRoom)
+                val timeRule = courseTimeRuleDao.getRuleByBuildingAndSection(
+                    buildingType = buildingType,
+                    sectionNo = section
+                )
+                val ruleId = timeRule?.id ?: 1L
+                val scheduleId = courseScheduleDao.insertSchedule(
+                    CourseScheduleEntity(
+                        courseId = courseId,
+                        ruleId = ruleId,
+                        semesterId = semester.id,
+                        weekDay = weekDay,
+                        section = section,
+                        classRoom = classRoom.trim(),
+                        rawText = "手动添加",
+                        buildingType = buildingType
+                    )
+                )
+
+                courseScheduleDao.insertScheduleWeeks(
+                    weeks.map { weekNo ->
+                        CourseScheduleWeekEntity(scheduleId = scheduleId, weekNo = weekNo)
+                    }
+                )
+                _uiEvent.emit(ScheduleUiEvent.SaveSuccess)
+            } catch (e: Exception) {
+                Log.e("ScheduleViewModel", "Failed to create schedule", e)
+                _uiEvent.emit(ScheduleUiEvent.ShowError("新建课程失败: ${e.message ?: "未知错误"}"))
+            }
+        }
+    }
+
     /**
      * 删除当前排课记录。
      * 依赖 Room 数据库外键的级联删除 (CASCADE) 特性，同步清理相关的周次数据。
@@ -155,5 +268,12 @@ class ScheduleViewModel(
                 _uiEvent.emit(ScheduleUiEvent.ShowError("删除失败，请稍后重试"))
             }
         }
+    }
+
+    private fun parseWeeksInput(weeksDisplay: String): List<Int> {
+        return CourseUtil.parseWeeksString(weeksDisplay)
+            .filter { it in 1..30 }
+            .distinct()
+            .sorted()
     }
 }

@@ -27,7 +27,8 @@ import com.eggetteluo.todayclass.util.getDisplayName
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingScreen(
-    viewModel: SettingViewModel
+    viewModel: SettingViewModel,
+    onSemesterManageClick: () -> Unit
 ) {
     val currentTheme by viewModel.currentTheme.collectAsStateWithLifecycle()
 
@@ -75,6 +76,11 @@ fun SettingScreen(
                             color = MaterialTheme.colorScheme.primary
                         )
                     }
+                )
+                SettingCardItem(
+                    title = "学期管理",
+                    subtitle = "切换当前学期、编辑周数和删除旧学期",
+                    onClick = onSemesterManageClick
                 )
             }
         }

@@ -96,6 +96,26 @@ interface CourseScheduleDao {
     @Query("DELETE FROM course_schedule WHERE semesterId = :semesterId")
     suspend fun deleteSchedulesBySemesterId(semesterId: Long)
 
+    @Query("SELECT COUNT(*) FROM course_schedule WHERE courseId = :courseId")
+    suspend fun countSchedulesByCourseId(courseId: Long): Int
+
+    @Query(
+        """
+        SELECT COUNT(*) FROM course_schedule AS s
+        INNER JOIN course_schedule_week AS w ON s.id = w.scheduleId
+        WHERE s.semesterId = :semesterId
+            AND s.weekDay = :weekDay
+            AND s.section = :section
+            AND w.weekNo IN (:weeks)
+        """
+    )
+    suspend fun countConflictingSchedules(
+        semesterId: Long,
+        weekDay: Int,
+        section: Int,
+        weeks: List<Int>
+    ): Int
+
     // 获取单条排课记录的完整详情
     @Transaction
     @Query("SELECT * FROM course_schedule WHERE id = :scheduleId")

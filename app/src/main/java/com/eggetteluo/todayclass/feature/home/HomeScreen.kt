@@ -42,6 +42,8 @@ import com.eggetteluo.todayclass.ui.components.FabMenu
 fun HomeScreen(
     viewModel: HomeViewModel,
     onUploadClick: () -> Unit,
+    onAddCourseClick: () -> Unit,
+    onCourseManageClick: () -> Unit,
     onCourseClick: (Long) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -80,12 +82,8 @@ fun HomeScreen(
         floatingActionButton = {
             FabMenu(
                 onUploadClick = onUploadClick,
-                onAddClick = {
-
-                },
-                onCourseClick = {
-
-                }
+                onAddClick = onAddCourseClick,
+                onCourseManageClick = onCourseManageClick
             )
         }
     ) { innerPadding ->

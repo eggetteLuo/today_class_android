@@ -46,16 +46,19 @@ class UploadViewModel(
 
                 // 读取 Excel 原始数据
                 val excelData = ExcelUtil.readExcelSync(inputStream)
+                if (excelData.isEmpty()) {
+                    _uiState.value = UploadUiState.Error("课表文件为空，请选择有效的 Excel 文件")
+                    return@launch
+                }
                 val allParsedCourses = mutableListOf<ParsedCourse>()
 
                 // 读取学期信息
-                var semesterName: String
-                if (excelData.isNotEmpty()) {
-                    semesterName = excelData[1][0]?.trim() ?: "未知学期"
-                    Log.i("UploadViewModel", "Successful query semesterName: $semesterName")
-                } else {
-                    semesterName = "未知学期"
-                }
+                val semesterName = excelData.getOrNull(1)
+                    ?.get(0)
+                    ?.trim()
+                    ?.takeIf { it.isNotBlank() }
+                    ?: "未知学期"
+                Log.i("UploadViewModel", "Successful query semesterName: $semesterName")
 
                 // 解析课程信息
                 excelData.forEachIndexed { rowIndex, rowMap ->
@@ -63,7 +66,8 @@ class UploadViewModel(
 
                     Log.d("UploadViewModel", "index=$rowIndex map=$rowMap")
 
-                    val sectionName = rowMap[0]?.trim() ?: "未知节次"
+                    val sectionName = rowMap[0]?.trim().orEmpty()
+                    if (sectionName.isBlank()) return@forEachIndexed
 
                     for (colIndex in 1..7) {
                         val cellText = rowMap[colIndex]
@@ -79,6 +83,10 @@ class UploadViewModel(
                 }
 
                 Log.i("UploadViewModel", "Successfully parsed ${allParsedCourses.size} courses.")
+                if (allParsedCourses.isEmpty()) {
+                    _uiState.value = UploadUiState.Error("未解析到课程，请确认 Excel 格式是否符合教务课表")
+                    return@launch
+                }
 
                 _uiState.value = UploadUiState.Success(allParsedCourses, semesterName)
             } catch (e: Exception) {
@@ -131,12 +139,17 @@ class UploadViewModel(
                 }
 
                 for (course in courses) {
+                    if (course.courseName.isBlank()) continue
+
                     // 处理基础课程信息
-                    val existingCourse = courseDao.getCourseByCode(course.courseCode)
+                    val safeCourseCode = course.courseCode.ifBlank {
+                        "import-${course.courseName}-${course.dayOfWeek}-${course.sectionName}".hashCode().toString()
+                    }
+                    val existingCourse = courseDao.getCourseByCode(safeCourseCode)
                     val courseId = if (existingCourse == null) {
                         // 插入课程
                         val newCourse = CourseEntity(
-                            code = course.courseCode,
+                            code = safeCourseCode,
                             name = course.courseName,
                             teacherName = course.teacher,
                             type = "",
@@ -151,6 +164,7 @@ class UploadViewModel(
                     val buildingType = CourseUtil.parseBuildingType(course.location)
                     val currentSectionNo = CourseUtil.sectionNameToInt(course.sectionName)
                     val weekList = CourseUtil.parseWeeksString(course.weeks)
+                    if (weekList.isEmpty()) continue
 
                     val timeRule = courseTimeRuleDao.getRuleByBuildingAndSection(
                         buildingType = buildingType,

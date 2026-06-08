@@ -28,6 +28,17 @@ interface CourseDao {
     @Query("SELECT * FROM course")
     fun getAllCourses(): Flow<List<CourseEntity>>
 
+    @Query(
+        """
+        SELECT * FROM course
+        WHERE name LIKE '%' || :query || '%'
+            OR code LIKE '%' || :query || '%'
+            OR teacherName LIKE '%' || :query || '%'
+        ORDER BY name ASC
+        """
+    )
+    fun searchCourses(query: String): Flow<List<CourseEntity>>
+
     // 根据 ID 查询单门课程
     @Query("SELECT * FROM course WHERE id = :courseId")
     suspend fun getCourseById(courseId: Long): CourseEntity?
@@ -35,5 +46,8 @@ interface CourseDao {
     // 根据课程代码查询单门课程
     @Query("SELECT * FROM course WHERE code = :courseCode")
     suspend fun getCourseByCode(courseCode: String): CourseEntity?
+
+    @Query("DELETE FROM course WHERE id = :courseId")
+    suspend fun deleteCourseById(courseId: Long)
 
 }

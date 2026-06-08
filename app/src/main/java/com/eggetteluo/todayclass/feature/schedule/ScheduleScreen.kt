@@ -122,6 +122,8 @@ fun ScheduleScreen(
                         showSaveDialog.value = false
                         Log.d("ScheduleScreen", "Confirm save clicked")
                         viewModel.saveSchedule(
+                            courseName = courseName,
+                            courseCode = courseCode,
                             teacherName = teacherName,
                             classRoom = classRoom,
                             weekDayStr = weekDay,
@@ -267,8 +269,18 @@ fun ScheduleScreen(
                         Spacer(modifier = Modifier.height(8.dp))
 
                         FormCard(title = "课程基本信息") {
-                            FormTextField(value = courseName, label = "课程名称", readOnly = true)
-                            FormTextField(value = courseCode, label = "课程代码", readOnly = true)
+                            FormTextField(
+                                value = courseName,
+                                label = "课程名称",
+                                readOnly = isEditing,
+                                onValueChange = { courseName = it }
+                            )
+                            FormTextField(
+                                value = courseCode,
+                                label = "课程代码",
+                                readOnly = isEditing,
+                                onValueChange = { courseCode = it }
+                            )
                             FormTextField(
                                 value = teacherName,
                                 label = "任课教师",
