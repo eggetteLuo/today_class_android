@@ -5,6 +5,7 @@ import androidx.room.Relation
 import com.eggetteluo.todayclass.data.local.entity.CourseEntity
 import com.eggetteluo.todayclass.data.local.entity.CourseScheduleEntity
 import com.eggetteluo.todayclass.data.local.entity.CourseScheduleWeekEntity
+import com.eggetteluo.todayclass.data.local.entity.CourseScheduleWeekNoteEntity
 import com.eggetteluo.todayclass.data.local.entity.CourseTimeRuleEntity
 
 // 将一节课的完整信息组合在一起
@@ -28,5 +29,10 @@ data class ScheduleWithDetails(
         parentColumn = "id",
         entityColumn = "scheduleId"
     )
-    val weeks: List<CourseScheduleWeekEntity>
+    val weeks: List<CourseScheduleWeekEntity>,
+    @Relation(
+        parentColumn = "id",
+        entityColumn = "scheduleId"
+    )
+    val weekNotes: List<CourseScheduleWeekNoteEntity>
 )

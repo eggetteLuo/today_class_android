@@ -21,6 +21,7 @@ val databaseModule = module {
     single {
         lateinit var database: AppDatabase
         database = Room.databaseBuilder(androidContext(), AppDatabase::class.java, "today_class_db")
+            .addMigrations(AppDatabase.MIGRATION_1_2)
             .addCallback(object : RoomDatabase.Callback() {
                 override fun onCreate(db: SupportSQLiteDatabase) {
                     super.onCreate(db)

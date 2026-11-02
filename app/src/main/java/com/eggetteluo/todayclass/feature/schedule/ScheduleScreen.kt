@@ -6,9 +6,12 @@ import android.content.Intent
 import android.provider.AlarmClock
 import android.util.Log
 import android.widget.Toast
+import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -16,6 +19,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -35,6 +42,7 @@ import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingToolbarDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.HorizontalFloatingToolbar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -48,6 +56,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -55,12 +64,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.eggetteluo.todayclass.ui.root.LocalSnackbarHostState
+import com.eggetteluo.todayclass.util.CourseUtil
 import kotlinx.coroutines.flow.collectLatest
+import kotlin.math.abs
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -81,6 +93,8 @@ fun ScheduleScreen(
     var section by remember { mutableStateOf("") }
     var weeksDisplay by remember { mutableStateOf("") }
     var rawText by remember { mutableStateOf("") }
+    var weekNotes by remember { mutableStateOf<Map<Int, String>>(emptyMap()) }
+    var selectedNoteWeek by remember { mutableStateOf<Int?>(null) }
 
     // 闹钟相关状态
     var startTime by remember { mutableStateOf("") }
@@ -128,7 +142,8 @@ fun ScheduleScreen(
                             classRoom = classRoom,
                             weekDayStr = weekDay,
                             sectionStr = section,
-                            weeksDisplay = weeksDisplay
+                            weeksDisplay = weeksDisplay,
+                            weekNotes = weekNotes
                         )
                     }
                 ) {
@@ -255,7 +270,23 @@ fun ScheduleScreen(
                             rawText = it.schedule.rawText
                             weeksDisplay = it.weeks.map { week -> week.weekNo }
                                 .sorted().joinToString(", ")
+                            weekNotes = it.weekNotes
+                                .associate { note -> note.weekNo to note.note }
+                            selectedNoteWeek = it.weeks.minOfOrNull { week -> week.weekNo }
                             startTime = realStartTime
+                        }
+                    }
+
+                    val noteWeeks = remember(weeksDisplay) {
+                        CourseUtil.parseWeeksString(weeksDisplay)
+                            .filter { it in 1..30 }
+                            .distinct()
+                            .sorted()
+                    }
+
+                    LaunchedEffect(noteWeeks) {
+                        if (selectedNoteWeek !in noteWeeks) {
+                            selectedNoteWeek = noteWeeks.firstOrNull()
                         }
                     }
 
@@ -373,6 +404,67 @@ fun ScheduleScreen(
                                         Text("设为闹钟")
                                     }
                                 }
+
+                                HorizontalDivider(
+                                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                                )
+
+                                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    Text(
+                                        text = "周次笔记",
+                                        style = MaterialTheme.typography.titleSmall,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                    Text(
+                                        text = "不同周次可记录不同的课堂重点或安排",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+
+                                if (noteWeeks.isEmpty()) {
+                                    Text(
+                                        text = "填写有效上课周次后，可在这里添加周次笔记",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                } else {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.Center,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = "第",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                        WeekNumberWheel(
+                                            weeks = noteWeeks,
+                                            selectedWeek = selectedNoteWeek,
+                                            onSelectedWeekChange = { selectedNoteWeek = it }
+                                        )
+                                        Text(
+                                            text = "周",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+
+                                    selectedNoteWeek?.let { weekNo ->
+                                        OutlinedTextField(
+                                            value = weekNotes[weekNo].orEmpty(),
+                                            onValueChange = { value ->
+                                                weekNotes = weekNotes + (weekNo to value)
+                                            },
+                                            label = { Text("第${weekNo}周课堂笔记") },
+                                            placeholder = { Text("记录课堂重点、老师通知或复习安排") },
+                                            minLines = 4,
+                                            maxLines = 8,
+                                            modifier = Modifier.fillMaxWidth()
+                                        )
+                                    }
+                                }
                             }
                         }
 
@@ -389,6 +481,94 @@ fun ScheduleScreen(
 
                         Spacer(modifier = Modifier.height(100.dp))
                     }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun WeekNumberWheel(
+    weeks: List<Int>,
+    selectedWeek: Int?,
+    onSelectedWeekChange: (Int) -> Unit
+) {
+    val itemHeight = 44.dp
+    val initialIndex = remember(weeks) {
+        weeks.indexOf(selectedWeek).takeIf { it >= 0 } ?: 0
+    }
+    val listState = rememberLazyListState(
+        initialFirstVisibleItemIndex = initialIndex
+    )
+    val flingBehavior = rememberSnapFlingBehavior(lazyListState = listState)
+    val centeredIndex by remember {
+        derivedStateOf {
+            val layoutInfo = listState.layoutInfo
+            val viewportCenter =
+                (layoutInfo.viewportStartOffset + layoutInfo.viewportEndOffset) / 2
+            layoutInfo.visibleItemsInfo.minByOrNull { item ->
+                abs(item.offset + item.size / 2 - viewportCenter)
+            }?.index ?: 0
+        }
+    }
+
+    LaunchedEffect(weeks) {
+        val targetIndex = weeks.indexOf(selectedWeek).takeIf { it >= 0 } ?: 0
+        if (targetIndex != listState.firstVisibleItemIndex) {
+            listState.scrollToItem(targetIndex)
+        }
+    }
+
+    LaunchedEffect(centeredIndex, weeks) {
+        weeks.getOrNull(centeredIndex)?.let(onSelectedWeekChange)
+    }
+
+    Box(
+        modifier = Modifier
+            .width(72.dp)
+            .height(itemHeight * 3),
+        contentAlignment = Alignment.Center
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(itemHeight)
+                .background(
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    shape = MaterialTheme.shapes.small
+                )
+        )
+        LazyColumn(
+            state = listState,
+            flingBehavior = flingBehavior,
+            contentPadding = PaddingValues(vertical = itemHeight),
+            modifier = Modifier.fillMaxSize()
+        ) {
+            itemsIndexed(
+                items = weeks,
+                key = { _, weekNo -> weekNo }
+            ) { index, weekNo ->
+                val isSelected = index == centeredIndex
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(itemHeight),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = weekNo.toString(),
+                        style = if (isSelected) {
+                            MaterialTheme.typography.headlineMedium
+                        } else {
+                            MaterialTheme.typography.titleMedium
+                        },
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                        color = if (isSelected) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.45f)
+                        }
+                    )
                 }
             }
         }
