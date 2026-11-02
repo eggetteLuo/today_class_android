@@ -10,6 +10,7 @@ import com.eggetteluo.todayclass.data.local.dao.SemesterInfoDao
 import com.eggetteluo.todayclass.data.local.entity.CourseEntity
 import com.eggetteluo.todayclass.data.local.entity.CourseScheduleEntity
 import com.eggetteluo.todayclass.data.local.entity.CourseScheduleWeekEntity
+import com.eggetteluo.todayclass.data.local.entity.CourseScheduleWeekNoteEntity
 import com.eggetteluo.todayclass.util.CourseUtil
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -87,7 +88,8 @@ class ScheduleViewModel(
         classRoom: String,
         weekDayStr: String,
         sectionStr: String,
-        weeksDisplay: String
+        weeksDisplay: String,
+        weekNotes: Map<Int, String> = emptyMap()
     ) {
         val currentState = _uiState.value
         if (currentState !is ScheduleUiState.Success) return
@@ -101,7 +103,8 @@ class ScheduleViewModel(
                 classRoom = classRoom,
                 weekDayStr = weekDayStr,
                 sectionStr = sectionStr,
-                weeksDisplay = weeksDisplay
+                weeksDisplay = weeksDisplay,
+                weekNotes = weekNotes
             )
             return
         }
@@ -120,11 +123,7 @@ class ScheduleViewModel(
                 courseScheduleDao.updateSchedule(updatedSchedule)
 
                 // 3. 处理上课周次：将逗号分隔的字符串解析为去重的整数集合
-                val parsedWeeks = weeksDisplay.split(",")
-                    .map { it.trim() }
-                    .filter { it.isNotEmpty() }
-                    .mapNotNull { it.toIntOrNull() }
-                    .distinct()
+                val parsedWeeks = parseWeeksInput(weeksDisplay)
 
                 val newWeekEntities = parsedWeeks.map { weekNo ->
                     CourseScheduleWeekEntity(scheduleId = details.schedule.id, weekNo = weekNo)
@@ -134,6 +133,16 @@ class ScheduleViewModel(
                 courseScheduleDao.deleteWeeksByScheduleId(details.schedule.id)
                 if (newWeekEntities.isNotEmpty()) {
                     courseScheduleDao.insertScheduleWeeks(newWeekEntities)
+                }
+
+                courseScheduleDao.deleteWeekNotesByScheduleId(details.schedule.id)
+                val noteEntities = createWeekNoteEntities(
+                    scheduleId = details.schedule.id,
+                    weeks = parsedWeeks,
+                    weekNotes = weekNotes
+                )
+                if (noteEntities.isNotEmpty()) {
+                    courseScheduleDao.upsertWeekNotes(noteEntities)
                 }
 
                 Log.d("ScheduleViewModel", "Schedule data updated successfully")
@@ -153,7 +162,8 @@ class ScheduleViewModel(
         classRoom: String,
         weekDayStr: String,
         sectionStr: String,
-        weeksDisplay: String
+        weeksDisplay: String,
+        weekNotes: Map<Int, String> = emptyMap()
     ) {
         viewModelScope.launch {
             try {
@@ -234,6 +244,14 @@ class ScheduleViewModel(
                         CourseScheduleWeekEntity(scheduleId = scheduleId, weekNo = weekNo)
                     }
                 )
+                val noteEntities = createWeekNoteEntities(
+                    scheduleId = scheduleId,
+                    weeks = weeks,
+                    weekNotes = weekNotes
+                )
+                if (noteEntities.isNotEmpty()) {
+                    courseScheduleDao.upsertWeekNotes(noteEntities)
+                }
                 _uiEvent.emit(ScheduleUiEvent.SaveSuccess)
             } catch (e: Exception) {
                 Log.e("ScheduleViewModel", "Failed to create schedule", e)
@@ -275,5 +293,26 @@ class ScheduleViewModel(
             .filter { it in 1..30 }
             .distinct()
             .sorted()
+    }
+
+    private fun createWeekNoteEntities(
+        scheduleId: Long,
+        weeks: List<Int>,
+        weekNotes: Map<Int, String>
+    ): List<CourseScheduleWeekNoteEntity> {
+        val updatedAt = System.currentTimeMillis()
+        return weeks.mapNotNull { weekNo ->
+            val note = weekNotes[weekNo].orEmpty()
+            if (note.isBlank()) {
+                null
+            } else {
+                CourseScheduleWeekNoteEntity(
+                    scheduleId = scheduleId,
+                    weekNo = weekNo,
+                    note = note,
+                    updatedAt = updatedAt
+                )
+            }
+        }
     }
 }

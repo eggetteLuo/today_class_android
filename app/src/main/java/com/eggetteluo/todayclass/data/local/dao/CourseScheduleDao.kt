@@ -8,6 +8,7 @@ import androidx.room.Transaction
 import androidx.room.Update
 import com.eggetteluo.todayclass.data.local.entity.CourseScheduleEntity
 import com.eggetteluo.todayclass.data.local.entity.CourseScheduleWeekEntity
+import com.eggetteluo.todayclass.data.local.entity.CourseScheduleWeekNoteEntity
 import com.eggetteluo.todayclass.data.local.relation.ScheduleWithDetails
 import com.eggetteluo.todayclass.data.model.TodayCourseDetail
 import com.eggetteluo.todayclass.data.model.WeeklyCourseDetail
@@ -23,6 +24,9 @@ interface CourseScheduleDao {
     // 批量插入上课周次
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertScheduleWeeks(weeks: List<CourseScheduleWeekEntity>)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsertWeekNotes(notes: List<CourseScheduleWeekNoteEntity>)
 
     // 获取某个学期的所有课程安排，并自动填充关联的课程、时间规则和周次
     @Transaction
@@ -132,5 +136,8 @@ interface CourseScheduleDao {
     // 根据排课ID删除其关联的所有周次记录 (用于更新周次时的"先删后插"策略)
     @Query("DELETE FROM course_schedule_week WHERE scheduleId = :scheduleId")
     suspend fun deleteWeeksByScheduleId(scheduleId: Long)
+
+    @Query("DELETE FROM course_schedule_week_note WHERE scheduleId = :scheduleId")
+    suspend fun deleteWeekNotesByScheduleId(scheduleId: Long)
 
 }
